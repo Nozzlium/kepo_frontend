@@ -8,8 +8,10 @@ import Category from "../data/Category"
 import axios from "axios"
 import CategoriesResponse from "../response/CategoriesResponse"
 import Question from "../data/Question"
+import { useNavigate } from "react-router-dom"
 
 const FeedArea = () => {
+    const navigate = useNavigate()
     const [isCategoriesLoading, setIsCategoryLoading] = useState<boolean>(true)
     const [newQuestionModalOpen, setNewQuestoionModalOpen] = useState<boolean>(false)
     const [questions, setQuestions] = useState<Question[]>([])
@@ -30,9 +32,7 @@ const FeedArea = () => {
     }
 
     const onQuestionPosted = (question: Question) => {
-        const curr = questions.slice()
-        curr.splice(0, 0, question)
-        setQuestions(curr)
+        navigate(`/question/${question.id}`)
     }
 
     useEffect(() => {

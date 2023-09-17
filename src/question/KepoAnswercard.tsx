@@ -46,7 +46,7 @@ const KepoAnswerCard = ({answer}: {answer: Answer}) => {
                 }}
             >
                 <Typography
-                    startDecorator={<b><Link href={"/profile/" + answerDisplay.user.id} color="neutral">{answerDisplay.user.name}</Link></b>}
+                    startDecorator={<b><Link href={"/profile/" + answerDisplay.user.id} color="neutral">{answerDisplay.user.username}</Link></b>}
                     level="body-xs"
                 >
                     {"answered:"}

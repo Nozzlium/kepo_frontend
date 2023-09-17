@@ -1,6 +1,9 @@
-interface AnswerParam {
+export interface AnswerParam {
     pageNo: number,
     pageSize: number
 }
 
-export default AnswerParam
+export interface PostAnswerParam {
+    questionId: number,
+    content: string
+}

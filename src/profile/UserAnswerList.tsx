@@ -4,8 +4,9 @@ import Answer from "../data/Answer"
 import KepoAnswerCard from "../question/KepoAnswercard"
 import User from "../data/User"
 import axios from "axios"
-import AnswersResponse from "../response/AnswersResponse"
-import AnswerParam from "../param/AnswerParam"
+import { AnswersResponse } from "../response/AnswersResponse"
+import { AnswerParam } from "../param/AnswerParam"
+import answerRequest from "../request/AnswerRequest"
 
 const UserAnswerList = ({
     user
@@ -31,13 +32,11 @@ const UserAnswerList = ({
                 pageNo: page.current,
                 pageSize: 10
             }
-            const url = `http://localhost:2637/api/user/${user.id}/answer`
-            const curr = answers.slice()
-            const response = await axios.get<AnswersResponse>(url, {params: param})
-            const answersData = response.data.data.answers
-            if (answersData.length > 0) {
-                const result = curr.concat(answersData)
-                page.current = response.data.data.page + 1
+            const [answersResult, currentPage] = await answerRequest.getByUser(user.id, param)
+            if (answersResult.length > 0) {
+                const curr = answers.slice()
+                const result = curr.concat(answersResult)
+                page.current = currentPage + 1
                 setIsAnswersLoading(false)
                 setAnswers(result)
             } else {

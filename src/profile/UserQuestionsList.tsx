@@ -5,7 +5,8 @@ import KepoQuestionCard from "../common/KepoQuestionCard"
 import axios from "axios"
 import QuestionsResponse from "../response/QuestionsResponse"
 import User from "../data/User"
-import QuestionParam from "../param/QuestionParam"
+import { QuestionParam } from "../param/QuestionParam"
+import questionRequest from "../request/QuestionRequest"
 
 const UserQuestionsList = ({
     user
@@ -23,19 +24,15 @@ const UserQuestionsList = ({
     const load = () => {
         setIsQuestionsLoading(true);
         (async () => {
-            const url = `http://localhost:2637/api/user/${user.id}/question`
-            console.log(url)
             const param: QuestionParam = {
                 pageNo: page.current,
                 pageSize: 10
             }
-            const response = await axios.get<QuestionsResponse>(url, {params: param})
-            console.log(response)
-            const questionsData = response.data.data.questions
-            if (questionsData.length > 0) {
+            const [questionsResult, currentPage] = await questionRequest.getByUser(user.id, param)
+            if (questionsResult.length > 0) {
                 const curr = questions.slice()
-                const result = curr.concat(questionsData)
-                page.current = response.data.data.page + 1
+                const result = curr.concat(questionsResult)
+                page.current = currentPage + 1
                 setIsQuestionsLoading(false)
                 setQuestions(result)
             } else {

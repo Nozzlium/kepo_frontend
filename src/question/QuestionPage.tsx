@@ -7,37 +7,48 @@ import Progress from "../common/Progress"
 import { useParams } from "react-router-dom"
 import axios from "axios"
 import QuestionResponse from "../response/QuestionResponse"
+import { height } from "@mui/system"
 
-type RouteParams = {
-    id: string
-}
-
-const QuestionDisplay = ({
-    question
-}: {question: Question | null}) => {
-    if (question === null) {
-        return <Progress/>
+const MainView = (
+    {
+        height,
+    }:
+    {
+        height: number
     }
-
-    return <AnswerArea question={question}/>
+) => {
+    if (height === 0) {
+        return <Progress/>
+    } else {
+        return <Sheet
+            sx={(theme) => ({
+                [theme.breakpoints.down('md')]: {
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'stretch',
+                    mt: `${height}px`
+                },
+                [theme.breakpoints.up('md')]: {
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems:'center',
+                    mt: `${height}px`
+                }
+            })}
+        >
+            <AnswerArea />
+        </Sheet>
+    }
 }
 
 const QuestionPage = () => {
-    const [isQuestionLoading, setIsQuestionLoading] = useState<boolean>(true)
-    const question = useRef<Question | null>(null)
-
-    const { id } = useParams<RouteParams>()
-
-    const loadQuestion: (id: string) => void = (id: string) => {
-        (async () => {
-            const questionResponse = await axios.get<QuestionResponse>(`http://localhost:2637/api/question/${id}`)
-            question.current = questionResponse.data.data
-            setIsQuestionLoading(false)
-        })()
-    }
+    const [navbarHeight, setNavbarHeight] = useState<number>(0)
+    const navbarRef = useRef<HTMLDivElement>()
 
     useEffect(() => {
-        loadQuestion(id ? id : "0")
+        if (navbarRef.current) {
+            setNavbarHeight(navbarRef.current.offsetHeight)
+        }
     }, [])
 
     return <Sheet
@@ -54,35 +65,9 @@ const QuestionPage = () => {
                 zIndex: 1
             }}
         >
-            <KepoNavbar/>
+            <KepoNavbar ref={navbarRef}/>
         </Sheet>
-        <Sheet
-            sx={{
-                zIndex: -1
-            }}
-        >
-            <KepoNavbar/>
-        </Sheet>
-        <Sheet
-            sx={(theme) => ({
-                [theme.breakpoints.down('md')]: {
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'stretch',
-                },
-                [theme.breakpoints.up('md')]: {
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems:'center',
-                }
-            })}
-        >
-            {
-                isQuestionLoading ?
-                <Progress/> :
-                <QuestionDisplay question={question.current}/>
-            }
-        </Sheet>
+        <MainView height={navbarHeight}/>
     </Sheet>
 }
 

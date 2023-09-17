@@ -1,25 +1,90 @@
 import KepoUsernameField from "../common/KepoUsernameField"
 import KepoPasswordField from "../common/KepoPasswordField"
-import { Button, Link, Sheet, Typography } from "@mui/joy"
+import { Alert, Button, IconButton, Link, Sheet, Typography } from "@mui/joy"
+import { FormEvent, useRef, useState } from "react"
+import LoginParam from "../param/LoginParam"
+import { useNavigate } from "react-router-dom"
+import UnauthorizedError from "../error/UnauthorizedError"
+import loginRequest from "../request/LoginRequest"
+import { Close } from "@mui/icons-material"
+import token from "../helper/Token"
 
-const styleform = {
-    width: 300,
-    py: 3, // padding top & bottom
-    px: 2, // padding left & right
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 2,
-    borderRadius: 'sm',
-    boxShadow: 'md',
-}
 const LoginForm = () => {
+    const navigate = useNavigate()
+    const [isAlertShown, setIsAlertShown] = useState<boolean>(false)
+
+    const submit = (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault()
+        const formData = new FormData(event.currentTarget)
+        const identity = formData.get("email")?.toString()
+        const password = formData.get("password")?.toString()
+        const param: LoginParam = {
+            identity: (identity === undefined) ? "" : identity,
+            password: (password === undefined) ? "" : password
+        };
+        (async () => {
+            try {
+                const savedToken = await loginRequest.login(param)
+                token.saveToken(savedToken)
+                token.setToken(savedToken)
+                navigate("/", {replace: true})
+            } catch (error) {
+                if (error instanceof UnauthorizedError) {
+                    setIsAlertShown(true)
+                }
+            }
+        })()
+    }
+
+    const CredentialAlert = () => {
+        if (isAlertShown) {
+            return <Alert 
+                variant="soft"
+                color="danger"
+                endDecorator={
+                    <IconButton variant="solid" size="sm" color="danger" onClick={() => {
+                        setIsAlertShown(false)
+                    }}>
+                        <Close />
+                    </IconButton>
+                }
+                >
+                Invalid Credentials
+            </Alert>
+        }
+        return null
+    }
+
     return <Sheet
-        variant="outlined"
-        sx={styleform}
+        variant="soft"
+        sx={{
+            width: 300,
+            py: 3, // padding top & bottom
+            px: 2, // padding left & right
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'stretch',
+            borderRadius: 'sm',
+            gap: 1
+        }}
     >
-        <KepoUsernameField/>
-        <KepoPasswordField/>
-        <Button sx={{ mt: 1 /* margin top */ }}>Log in</Button>
+        <CredentialAlert/>
+        <form 
+            onSubmit={submit}
+        >
+            <Sheet
+                sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 1
+                }}
+                variant="soft"
+            >
+                <KepoUsernameField/>
+                <KepoPasswordField/>
+                <Button sx={{ mt: 1 }} type="submit" >Log in</Button>
+            </Sheet>
+        </form>
         <Typography
             endDecorator={<Link href="/register">Signup</Link>}
             fontSize="sm"

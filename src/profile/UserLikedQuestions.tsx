@@ -22,7 +22,7 @@ const UserLikedQuestions = () => {
                 isLiked: true,
                 user: {
                     id: 1,
-                    name: "hmmm"
+                    username: "hmmm"
                 },
                 category: {
                     id: 1,

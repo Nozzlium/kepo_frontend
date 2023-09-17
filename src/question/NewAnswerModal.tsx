@@ -1,18 +1,25 @@
 import { Box, Button, FormControl, ModalDialog, Sheet, Textarea, Typography } from "@mui/joy"
 import Modal from "@mui/joy/Modal"
 import { ChangeEvent, Dispatch, SetStateAction, useState } from "react"
-import CreateAnswerBody from "../request/CreateAnswerBody"
+import { PostAnswerParam } from "../param/AnswerParam"
+import answerRequest from "../request/AnswerRequest"
+import Answer from "../data/Answer"
+import Question from "../data/Question"
 
 const NewAnswerModal = ({
     open,
     setOpen,
+    question,
+    onAnswerPosted
 }: {
     open: boolean,
     setOpen: Dispatch<SetStateAction<boolean>>,
+    question: Question,
+    onAnswerPosted: (answer: Answer) => void
 }) => {
-
-    const [createanswerBody, setCreateQuestionBody] = useState<CreateAnswerBody>({
-        questionId: 1,
+    const [isPostAnswerLoading, setPostAnswerLoading] = useState<boolean>()
+    const [createanswerBody, setCreateQuestionBody] = useState<PostAnswerParam>({
+        questionId: question.id,
         content: ""
     })
 
@@ -24,6 +31,16 @@ const NewAnswerModal = ({
             content: ""
         })
         setOpen(false)
+    }
+
+    const submit = () => {
+        setPostAnswerLoading(true);
+        (async () => {
+            const answerResult = await answerRequest.postNewAnswer(createanswerBody)
+            setPostAnswerLoading(false)
+            onAnswerPosted(answerResult)
+            closeDialog()
+        })()
     }
 
     const onContentChange = (
@@ -82,7 +99,7 @@ const NewAnswerModal = ({
                                 borderColor: 'divider'
                             }}
                         >
-                            <Button sx={{ml: 'auto'}} disabled={!isValid}>Submit</Button>     
+                            <Button sx={{ml: 'auto'}} disabled={!isValid} onClick={submit}>Submit</Button>     
                         </Box>
                     }
                 />

@@ -6,10 +6,14 @@ interface AnswersData {
     answers: Answer[]
 }
 
-interface AnswersResponse {
+export interface AnswersResponse {
     code: number,
     status: string,
     data: AnswersData
 }
 
-export default AnswersResponse
+export interface AnswerResponse {
+    code: number,
+    status: string,
+    data: Answer
+}

@@ -9,8 +9,13 @@ import Feed from './feed/Feed';
 import Profile from './profile/Profile';
 import QuestionPage from './question/QuestionPage';
 import { CssVarsProvider, CssBaseline } from '@mui/joy';
+import token from './helper/Token';
 
 function App() {
+
+  const savedToken = token.getToken()
+  token.setToken(savedToken)
+
   return (
     <CssVarsProvider
         defaultMode="dark"

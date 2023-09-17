@@ -7,41 +7,64 @@ import KepoAnswerCard from "./KepoAnswercard"
 import { Create } from "@mui/icons-material"
 import NewAnswerModal from "./NewAnswerModal"
 import axios from "axios"
-import AnswersResponse from "../response/AnswersResponse"
-import AnswerParam from "../param/AnswerParam"
+import { AnswersResponse } from "../response/AnswersResponse"
+import { AnswerParam } from "../param/AnswerParam"
+import Progress from "../common/Progress"
+import QuestionResponse from "../response/QuestionResponse"
+import { useParams } from "react-router-dom"
+import questionRequest from "../request/QuestionRequest"
+import answerRequest from "../request/AnswerRequest"
 
-const AnswerArea = (
-    {
-        question
-    }: {
-        question: Question
-    }
-) => {
+type RouteParams = {
+    id: string
+}
+
+const AnswerArea = () => {
+    const [isQuestionLoading, setIsQuestionLoading] = useState<boolean>(true)
     const [answers, setAnswers] = useState<Answer[]>(Array())
     const [isAnswersLoading, setIsAnswersLoading] = useState<boolean>(true)
     const [answerDialogOpen, setAnswerDialogOpen] = useState<boolean>(false)
+    const question = useRef<Question>()
     const page = useRef<number>(1)
+
+    const { id } = useParams<RouteParams>()
+
+    const onAnswerSubmit = (answer: Answer) => {
+        const curr = answers.slice()
+        curr.splice(0, 0, answer)
+        setAnswers(curr)
+    }
+
+    const loadQuestion: (id: string) => void = (id: string) => {
+        setIsQuestionLoading(true);
+        (async () => {
+            const questionResult = await questionRequest.getById(id)
+            question.current = questionResult
+            setIsQuestionLoading(false)
+            loadAnswers()
+        })()
+    }
 
     const loadAnswers = () => {
         setIsAnswersLoading(true);
         (async () => {
-            const curr = answers.slice()
-            const params: AnswerParam = {
-                pageNo: page.current,
-                pageSize: 10
+            if (question.current) {
+                const curr = answers.slice()
+                const params: AnswerParam = {
+                    pageNo: page.current,
+                    pageSize: 10
+                }
+                const [answersResult, currentPage] = await answerRequest.getByQuestion(question.current.id, params)
+                const result = curr.concat(answersResult)
+                page.current = currentPage + 1
+                setIsAnswersLoading(false)
+                setAnswers(result)
             }
-            const url = `http://localhost:2637/api/question/${question.id}/answer`
-            console.log(url)
-            const response = await axios.get<AnswersResponse>(url, { params: params })    
-            const result = curr.concat(response.data.data.answers)
-            page.current = response.data.data.page + 1
-            setIsAnswersLoading(false)
-            setAnswers(result)
         })()
     }
 
     useEffect(() => {
-        loadAnswers()
+        loadQuestion(id ? id : '0')
     }, [])
 
     const openNewAnswerDialog = () => {
@@ -68,10 +91,19 @@ const AnswerArea = (
             }
         })}
     >
-        <Sheet>
-            <KepoQuestionCard question={question}/>
-        </Sheet>
-        <NewAnswerModal open={answerDialogOpen} setOpen={setAnswerDialogOpen}/>
+        {
+            isQuestionLoading || !question.current ?
+                <Progress /> :
+                <>
+                    <KepoQuestionCard question={question.current}/>
+                    <NewAnswerModal 
+                        open={answerDialogOpen} 
+                        setOpen={setAnswerDialogOpen} 
+                        onAnswerPosted={onAnswerSubmit}
+                        question={question.current}
+                    />
+                </>
+        }
         <Button
             startDecorator={<Create/>}
             onClick={() => openNewAnswerDialog()}
@@ -86,6 +118,7 @@ const AnswerArea = (
             padding: 0
         }}>{listItem}</ul>
         <Button variant="plain" color="neutral" onClick={() => loadAnswers()} loading={isAnswersLoading}>Load More</Button>
+        
     </Sheet>
 }
 

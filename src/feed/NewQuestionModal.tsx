@@ -8,6 +8,8 @@ import axios from "axios"
 import CategoriesResponse from "../response/CategoriesResponse"
 import QuestionResponse from "../response/QuestionResponse"
 import Question from "../data/Question"
+import { PostQuestionParam } from "../param/QuestionParam"
+import questionRequest from "../request/QuestionRequest"
 
 const NewQuestionModal = ({
     open,
@@ -21,14 +23,14 @@ const NewQuestionModal = ({
     const [isCategoryLoading, setIsCategoryLoading] = useState<boolean>(true)
     const [isPostingLoading, setIsPostingLoading] = useState<boolean>(false)
     const categories = useRef<Category[]>([])
-    const [createQuestionBody, setCreateQuestionBody] = useState<CreateQuestionBody>({
+    const [postQuestionParam, setPostQuestionParam] = useState<PostQuestionParam>({
         categoryId: 0,
         content: "",
         description: ""
     })
 
     const closeDialog = () => {
-        setCreateQuestionBody({
+        setPostQuestionParam({
             categoryId: 0,
             content: "",
             description: ""
@@ -37,48 +39,43 @@ const NewQuestionModal = ({
     }
 
     const isDataValid: boolean = 
-            createQuestionBody.categoryId != 0
-            && createQuestionBody.content.length !== 0
-            && createQuestionBody.description.length !== 0
+            postQuestionParam.categoryId != 0
+            && postQuestionParam.content.length !== 0
+            && postQuestionParam.description.length !== 0
 
 
 
     const onContentInput = (
         event: React.ChangeEvent<HTMLInputElement> | null,
     ) => {
-        const curr = {...createQuestionBody}
+        const curr = {...postQuestionParam}
         curr.content = event ? event.target.value : ""
-        setCreateQuestionBody(curr)
-        console.log(createQuestionBody)
+        setPostQuestionParam(curr)
     }
 
     const onDescInput = (
         event: React.ChangeEvent<HTMLTextAreaElement> | null,
     ) => {
-        const curr = {...createQuestionBody}
+        const curr = {...postQuestionParam}
         curr.description = event ? event.target.value : ""
-        setCreateQuestionBody(curr)
-        console.log(createQuestionBody)
+        setPostQuestionParam(curr)
     }
 
     const onCategoryChange = (
         _ : React.SyntheticEvent | null,
         newValue: number | null,
     ) => {
-        const curr = {...createQuestionBody}
+        const curr = {...postQuestionParam}
         curr.categoryId = newValue ? newValue : 0
-        setCreateQuestionBody(curr)
+        setPostQuestionParam(curr)
     }
 
     const onSubmit = () => {
         setIsPostingLoading(true);
         (async () => {
-            const response = await axios.post<QuestionResponse>(
-                "http://localhost:2637/api/question",
-                createQuestionBody
-            )
+            const questionResponse = await questionRequest.postQuestion(postQuestionParam)
             setIsPostingLoading(false)
-            onQuestionPosted(response.data.data)
+            onQuestionPosted(questionResponse)
             closeDialog();
         })()
     }
@@ -92,12 +89,11 @@ const NewQuestionModal = ({
     }
 
     useEffect(() => {
-        console.log("efek")
         loadCategories()
     }, [])
 
     const categoryItems = categories.current.map(category => 
-        <Option value={category.id}>{category.name}</Option>
+        <Option key={category.id} value={category.id}>{category.name}</Option>
     )
 
     return <Modal 

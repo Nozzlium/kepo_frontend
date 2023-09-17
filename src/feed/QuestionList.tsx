@@ -5,7 +5,8 @@ import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react"
 import Category from "../data/Category"
 import axios from "axios"
 import QuestionsResponse from "../response/QuestionsResponse"
-import QuestionParam from "../param/QuestionParam"
+import { QuestionParam } from "../param/QuestionParam"
+import questionRequest from "../request/QuestionRequest"
 
 const QuestionList = (
     {
@@ -32,13 +33,16 @@ const QuestionList = (
             if (category.current !== 0) {
                 params.category = category.current
             }
-            const response = await axios.get<QuestionsResponse>('http://localhost:2637/api/question', {params: params})
-            const questionsResp = response.data.data.questions
-            if (questionsResp.length > 0) {
-                const curr = questions.slice()
-                const res = curr.concat(questionsResp)
-                page.current = response.data.data.page + 1
-                setQuestions(res)
+            const [questions, pageNo] = await questionRequest.getFeed(params)
+            if (questions.length > 0) {
+                if (pageNo === 1) {
+                    setQuestions(questions)
+                } else {
+                    const curr = questions.slice()
+                    const res = curr.concat(questions)
+                    page.current = pageNo + 1
+                    setQuestions(res)
+                }
             }
             setIsQuestionsLoading(false)
         })()
@@ -63,7 +67,7 @@ const QuestionList = (
     )
 
     const categoryItems = categories.map(category => 
-        <Option value={category.id}>{category.name}</Option>
+        <Option key={category.id} value={category.id}>{category.name}</Option>
     )
 
     return <Sheet

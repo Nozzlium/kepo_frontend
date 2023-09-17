@@ -1,8 +1,12 @@
-interface QuestionParam {
+export interface QuestionParam {
     keyword?: string,
     pageNo?: number,
     pageSize?: number,
     category?: number
 }
 
-export default QuestionParam
+export interface PostQuestionParam {
+    categoryId: number,
+    content: string,
+    description: string
+}
