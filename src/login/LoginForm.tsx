@@ -2,12 +2,12 @@ import KepoUsernameField from "../common/KepoUsernameField"
 import KepoPasswordField from "../common/KepoPasswordField"
 import { Alert, Button, IconButton, Link, Sheet, Typography } from "@mui/joy"
 import { FormEvent, useRef, useState } from "react"
-import LoginParam from "../param/LoginParam"
+import { LoginParam }from "../param/AuthParam"
 import { useNavigate } from "react-router-dom"
-import UnauthorizedError from "../error/UnauthorizedError"
-import loginRequest from "../request/LoginRequest"
+import { UnauthorizedError } from "../error/KepoError"
+import authRequest from "../request/AuthRequest"
 import { Close } from "@mui/icons-material"
-import token from "../helper/Token"
+import token from "../lib/Token"
 
 const LoginForm = () => {
     const navigate = useNavigate()
@@ -19,12 +19,12 @@ const LoginForm = () => {
         const identity = formData.get("email")?.toString()
         const password = formData.get("password")?.toString()
         const param: LoginParam = {
-            identity: (identity === undefined) ? "" : identity,
-            password: (password === undefined) ? "" : password
+            identity: identity ?? "",
+            password: password ?? ""
         };
         (async () => {
             try {
-                const savedToken = await loginRequest.login(param)
+                const savedToken = await authRequest.login(param)
                 token.saveToken(savedToken)
                 token.setToken(savedToken)
                 navigate("/", {replace: true})

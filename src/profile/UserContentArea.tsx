@@ -1,4 +1,4 @@
-import { Sheet, Tab, TabList, TabPanel, Tabs, Typography } from "@mui/joy"
+import { Box, Sheet, Tab, TabList, TabPanel, Tabs, Typography } from "@mui/joy"
 import UserQuestionsList from "./UserQuestionsList"
 import UserAnswerList from "./UserAnswerList"
 import UserLikedQuestions from "./UserLikedQuestions"
@@ -41,17 +41,19 @@ const UserContentArea = () => {
         loadUser(id ? id : "0")
     }, [])
 
-    return <Sheet
+    return <Box
         sx={(theme) => ({
             [theme.breakpoints.down('md')]: {
                 display: 'flex',
                 flexDirection: 'column',
-                px: 1
+                px: 1,
+                my: 1
             },
             [theme.breakpoints.up('md')]: {
                 display: 'flex',
                 flexDirection: 'column',
-                width: 700
+                width: 700,
+                my: 1
             }
         })}
     >
@@ -68,7 +70,9 @@ const UserContentArea = () => {
                     ><b>{user.current.username}'s activities</b></Typography>
                     <Tabs defaultValue={0}
                         sx={{
-                            zIndex: 0
+                            zIndex: 0,
+                            borderRadius: 'sm',
+                            boxShadow: 'md'
                         }}
                     >
                         <TabList
@@ -85,12 +89,12 @@ const UserContentArea = () => {
                             <UserAnswerList user={user.current}/>
                         </TabPanel>
                         <TabPanel value={2}>
-                            <UserLikedQuestions/>
+                            <UserLikedQuestions user={user.current}/>
                         </TabPanel>
                     </Tabs>
                 </>
         }
-    </Sheet>
+    </Box>
 }
 
 export default UserContentArea

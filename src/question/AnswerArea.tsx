@@ -1,4 +1,4 @@
-import { Button, Sheet } from "@mui/joy"
+import { Box, Button, Sheet } from "@mui/joy"
 import KepoQuestionCard from "../common/KepoQuestionCard"
 import Question from "../data/Question"
 import Answer from "../data/Answer"
@@ -14,6 +14,7 @@ import QuestionResponse from "../response/QuestionResponse"
 import { useParams } from "react-router-dom"
 import questionRequest from "../request/QuestionRequest"
 import answerRequest from "../request/AnswerRequest"
+import MainKepoCreateButton from "../common/MainKepoCreateButton"
 
 type RouteParams = {
     id: string
@@ -75,19 +76,21 @@ const AnswerArea = () => {
         <li><KepoAnswerCard answer={answer}/></li>
     ))
 
-    return <Sheet
+    return <Box
         sx={(theme) => ({
             [theme.breakpoints.down('md')]: {
                 display: 'flex',
                 flexDirection: 'column',
                 px: 1,
-                my: 1
+                my: 1,
+                gap: 1
             },
             [theme.breakpoints.up('md')]: {
                 display: 'flex',
                 flexDirection: 'column',
                 width: 700,
                 my: 1,
+                gap: 1
             }
         })}
     >
@@ -104,22 +107,21 @@ const AnswerArea = () => {
                     />
                 </>
         }
-        <Button
-            startDecorator={<Create/>}
-            onClick={() => openNewAnswerDialog()}
-            variant="outlined"
-            color="neutral"
+        <MainKepoCreateButton text="Write Answer" onClick={() => openNewAnswerDialog()} />
+        <Sheet
             sx={{
-                my: 1
+                borderRadius: 'sm',
+                boxShadow: 'md'
             }}
-        >Write an Answer</Button>
-        <ul style={{
-            listStyleType: 'none',
-            padding: 0
-        }}>{listItem}</ul>
+        >
+            <ul style={{
+                listStyleType: 'none',
+                padding: 0
+            }}>{listItem}</ul>
+        </Sheet>
         <Button variant="plain" color="neutral" onClick={() => loadAnswers()} loading={isAnswersLoading}>Load More</Button>
         
-    </Sheet>
+    </Box>
 }
 
 export default AnswerArea

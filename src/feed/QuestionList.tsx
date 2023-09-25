@@ -1,4 +1,4 @@
-import { Button, List, ListItem, Sheet, Select, Option } from "@mui/joy"
+import { Button, List, ListItem, Sheet, Select, Option, Box } from "@mui/joy"
 import KepoQuestionCard from "../common/KepoQuestionCard"
 import Question from "../data/Question"
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react"
@@ -70,7 +70,7 @@ const QuestionList = (
         <Option key={category.id} value={category.id}>{category.name}</Option>
     )
 
-    return <Sheet
+    return <Box
         sx={{
             display: 'flex',
             flexDirection: 'column',
@@ -80,7 +80,8 @@ const QuestionList = (
             defaultValue={1}
             variant="soft"
             sx={{
-                my: 1
+                my: 1,
+                boxShadow: 'lg'
             }}
             onChange={handleChange}
         >{categoryItems}</Select>
@@ -90,7 +91,7 @@ const QuestionList = (
             mb: 1
         }} >{listItem}</List>
         <Button variant="plain" color="neutral" onClick={() => load()} loading={isQuestionsLoading}>Load More</Button>
-    </Sheet>
+    </Box>
 }
 
 export default QuestionList

@@ -1,5 +1,5 @@
 import Answer from "../data/Answer";
-import UnauthorizedError from "../error/UnauthorizedError";
+import { UnauthorizedError } from "../error/KepoError";
 import { AnswerParam, PostAnswerParam } from "../param/AnswerParam";
 import { AnswersResponse, AnswerResponse } from "../response/AnswersResponse";
 import networkCall from "./NetworkCall";
@@ -26,7 +26,7 @@ export class AnswerRequest {
         const code = response.data.code
 
         if (code === 401) {
-            throw new UnauthorizedError()
+            throw new UnauthorizedError(response.data.status)
         }
 
         return response.data.data

@@ -1,4 +1,4 @@
-import { Button, List, ListItem, Sheet } from "@mui/joy"
+import { Box, Button, List, ListItem, Sheet } from "@mui/joy"
 import { useEffect, useRef, useState } from "react"
 import Question from "../data/Question"
 import KepoQuestionCard from "../common/KepoQuestionCard"
@@ -45,7 +45,7 @@ const UserQuestionsList = ({
         load()
     }, [])
 
-    return <Sheet
+    return <Box
         sx={{
             display: 'flex',
             flexDirection: 'column'
@@ -56,7 +56,7 @@ const UserQuestionsList = ({
             padding: 0
         }} >{items}</List>
         <Button variant="plain" color="neutral" onClick={() => load()} loading={isQuestionsLoading}>Load More</Button>
-    </Sheet>
+    </Box>
 }
 
 export default UserQuestionsList

@@ -1,15 +1,27 @@
 import { FormControl, FormLabel, Input } from "@mui/joy"
-import { MutableRefObject } from "react"
+import { ChangeEventHandler, MutableRefObject } from "react"
 
-const KepoUsernameField = () => {
+const KepoUsernameField = (
+  {
+    value, 
+    placeholder,
+    onChange
+  }: 
+  {
+    value?: string, 
+    placeholder?: string,
+    onChange? : ChangeEventHandler<HTMLInputElement>
+  }
+) => {
   return <FormControl>
-    <FormLabel>Email</FormLabel>
+    <FormLabel>Username</FormLabel>
     <Input
       // html input attribute
-      name="email"
-      type="email"
-      placeholder="johndoe@email.com"
+      name="username"
+      placeholder={placeholder ?? "Username"}
       variant="plain"
+      value={value}
+      onChange={onChange}
     />
   </FormControl>
 }

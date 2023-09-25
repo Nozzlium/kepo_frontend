@@ -6,6 +6,7 @@ export class Token {
     setToken: (token: string | null) => void = (token) => {
         if (token !== null) {
             networkCall.defaults.headers.common["Authorization"] = `Bearer ${token}`
+            this.saveToken(token)
         }
     }
 

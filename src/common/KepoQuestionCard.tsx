@@ -1,7 +1,9 @@
-import { Button, Link, Sheet, Typography } from "@mui/joy"
+import { Box, Button, Link, Sheet, Typography } from "@mui/joy"
 import Question from "../data/Question"
 import { ThumbUp, ThumbUpOffAltOutlined } from "@mui/icons-material"
 import { useState } from "react"
+import likeRequest from "../request/LikeRequest"
+import { QuestionLikeParam } from "../param/LikeParam"
 
 const KepoQuestionCard = (
     {
@@ -11,29 +13,32 @@ const KepoQuestionCard = (
         question: Question
     }
 ) => {
-    const [itemLikeLoading, setItemLikeLoading] = useState(false)
-    const [questionDisplay, setQuestionDisplay] = useState(question)
+    const [itemLikeLoading, setItemLikeLoading] = useState<boolean>(false)
+    const [questionDisplay, setQuestionDisplay] = useState<Question>(question)
 
     function handleCLick() {
-        const currDis: Question = {...questionDisplay}
-        const currLike = currDis.isLiked = !currDis.isLiked
-        if (currLike) {
-            currDis.likes +=1
-        } else {
-            currDis.likes -= 1
-        }
-        setQuestionDisplay(currDis)
+        setItemLikeLoading(true);
+        (async () => {
+            const param: QuestionLikeParam = {
+                questionId: questionDisplay.id,
+                isLiked: !questionDisplay.isLiked
+            }
+            const result = await likeRequest.likeQuestion(param)
+            setQuestionDisplay(result)
+            setItemLikeLoading(false)
+        })()
     }
 
     return <Sheet
-        variant="outlined"
         sx={{
             display: 'flex',
             flexDirection: 'row',
-            width: '100%'
+            width: '100%',
+            boxShadow: 'lg',
+            borderRadius: 'md'
         }}
     >
-        <Sheet
+        <Box
             sx={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -53,8 +58,8 @@ const KepoQuestionCard = (
                 }
             </Button>
             <Typography level="body-xs"><b>{questionDisplay.likes}</b></Typography>
-        </Sheet>
-        <Sheet
+        </Box>
+        <Box
             sx={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -64,7 +69,7 @@ const KepoQuestionCard = (
             <Link level="body-lg" color="neutral" sx={{my: 1}} href={"/question/" + questionDisplay.id}><b>{questionDisplay.content}</b></Link>
             <Typography level="body-sm">{questionDisplay.description}</Typography>
             <Typography level="body-xs" sx={{my: 1}}><b>{questionDisplay.answers} Answer(s)</b></Typography>
-        </Sheet>
+        </Box>
     </Sheet>
 }
 export default KepoQuestionCard

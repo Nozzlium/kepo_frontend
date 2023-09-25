@@ -1,4 +1,4 @@
-import { Button, CircularProgress, Sheet } from "@mui/joy"
+import { Box, Button, CircularProgress, Sheet } from "@mui/joy"
 import QuestionList from "./QuestionList"
 import { Create } from "@mui/icons-material"
 import { useEffect, useRef, useState } from "react"
@@ -9,6 +9,7 @@ import axios from "axios"
 import CategoriesResponse from "../response/CategoriesResponse"
 import Question from "../data/Question"
 import { useNavigate } from "react-router-dom"
+import MainKepoCreateButton from "../common/MainKepoCreateButton"
 
 const FeedArea = () => {
     const navigate = useNavigate()
@@ -39,7 +40,7 @@ const FeedArea = () => {
         loadCategories()
     }, [])
 
-    return <Sheet
+    return <Box
         sx={(theme) => ({
             [theme.breakpoints.down('md')]: {
                 display: 'flex',
@@ -55,7 +56,7 @@ const FeedArea = () => {
             }
         })}
         >
-            <Button color="neutral" variant="outlined" startDecorator={<Create />} onClick={() => openNewQuestionDialog()}>Ask a Question!</Button>
+            <MainKepoCreateButton text="Ask a Question!" onClick={() => openNewQuestionDialog()}/>
             <NewQuestionModal 
                 open={newQuestionModalOpen} 
                 setOpen={setNewQuestoionModalOpen}
@@ -71,7 +72,7 @@ const FeedArea = () => {
                     /> 
 
             }
-        </Sheet>
+        </Box>
 }
 
 export default FeedArea

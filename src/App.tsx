@@ -9,7 +9,7 @@ import Feed from './feed/Feed';
 import Profile from './profile/Profile';
 import QuestionPage from './question/QuestionPage';
 import { CssVarsProvider, CssBaseline } from '@mui/joy';
-import token from './helper/Token';
+import token from './lib/Token';
 
 function App() {
 
@@ -18,7 +18,7 @@ function App() {
 
   return (
     <CssVarsProvider
-        defaultMode="dark"
+      defaultMode='light'
     >
         <CssBaseline/>
         <Router>

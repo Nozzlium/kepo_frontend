@@ -25,6 +25,14 @@ class QuestionRequest {
         return [questions, page]
     }
 
+    getLikedByUser: (userId: number, param: QuestionParam) => Promise<[Question[], number]> = async (userId: number, param: QuestionParam) => {
+        const url = `http://localhost:2637/api/user/${userId}/question/like`
+        const response = await networkCall.get<QuestionsResponse>(url, {params: param})
+        const questions = response.data.data.questions
+        const page = response.data.data.page
+        return [questions, page]
+    }
+
     postQuestion: (param: PostQuestionParam) => Promise<Question> = async (param: PostQuestionParam) => {
         const url = `http://localhost:2637/api/question`
         const response = await networkCall.post<QuestionResponse>(url, param)

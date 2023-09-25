@@ -1,4 +1,4 @@
-import { Sheet } from "@mui/joy"
+import { Box, Sheet } from "@mui/joy"
 import { useParams } from "react-router-dom"
 import KepoNavbar from "../common/KepoNavbar"
 import UserContentArea from "./UserContentArea"
@@ -38,32 +38,33 @@ const Profile = () => {
     const [navbarHeight, setNavbarHeight] = useState<number>(0)
     const navbarRef = useRef<HTMLDivElement>()
 
-    const { id } = useParams()
-
-    useEffect(() => {
-        if (navbarRef.current) {
-            setNavbarHeight(navbarRef.current.offsetHeight)
-        }
-    }, [])
-
-    return <Sheet
+    return <Box
         className="page"
         sx={{
             display: 'flex',
             flexDirection: 'column',
         }}
     >
-        <Sheet
-            sx={{
-                position: "fixed",
-                width: "100%",
-                zIndex: 1
-            }}
+        <KepoNavbar ref={navbarRef}/>
+        <Box
+            sx={(theme) => ({
+                [theme.breakpoints.down('md')]: {
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'stretch',
+                    mt: `55px`
+                },
+                [theme.breakpoints.up('md')]: {
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems:'center',
+                    mt: `55px`
+                }
+            })}
         >
-            <KepoNavbar ref={navbarRef}/>
-        </Sheet>
-        <MainView navbarHeight={navbarHeight} />
-    </Sheet>
+            <UserContentArea/>
+        </Box>
+    </Box>
 }
 
 export default Profile

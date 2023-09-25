@@ -2,9 +2,25 @@ import { Button, Divider, Link, Sheet, Typography } from "@mui/joy"
 import Answer from "../data/Answer"
 import { ThumbUp, ThumbUpOffAltOutlined } from "@mui/icons-material"
 import { useState } from "react"
+import likeRequest from "../request/LikeRequest"
+import { AnswerLikeParam } from "../param/LikeParam"
 
 const KepoAnswerCard = ({answer}: {answer: Answer}) => {
     const [answerDisplay, setAnswerDisplay] = useState<Answer>(answer)
+    const [isLikeLoading, setLikeLoading] = useState<boolean>(false)
+
+    const likeClick = () => {
+        setLikeLoading(true);
+        (async () => {
+            const param: AnswerLikeParam = {
+                answerId: answerDisplay.id,
+                isLiked: !answerDisplay.isLiked
+            }
+            const answerResult = await likeRequest.likeAnswer(param)
+            setAnswerDisplay(answerResult)
+            setLikeLoading(false)
+        })()
+    }
 
     return <Sheet
         sx={{
@@ -28,9 +44,10 @@ const KepoAnswerCard = ({answer}: {answer: Answer}) => {
                 }}
             >
                 <Button 
-                        loading={false} 
+                        loading={isLikeLoading} 
                         variant="plain"
                         color="neutral"
+                        onClick={likeClick}
                 >
                         {
                             answerDisplay.isLiked ? (<ThumbUp/>) : (<ThumbUpOffAltOutlined/>)

@@ -1,37 +1,47 @@
 import { ListItem, Sheet, List, Button } from "@mui/joy"
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import KepoQuestionCard from "../common/KepoQuestionCard"
 import Question from "../data/Question"
+import User from "../data/User"
+import questionRequest from "../request/QuestionRequest"
+import { QuestionParam } from "../param/QuestionParam"
 
-const UserLikedQuestions = () => {
+const UserLikedQuestions = (
+    {
+        user
+    }:{
+        user: User
+    }) => {
     const [questions, setQuestions] = useState<Question[]>([])
+    const pageRef = useRef<number>(1)
 
     const items = questions.map(question => 
         <ListItem key={question.id} sx={{ px:0 }}><KepoQuestionCard question={question}/></ListItem>
     )
 
     const loadMore = () => {
-        const curr = questions.slice()
-        curr.push(
-            {
-                id: 1,
-                content: 'test1',
-                description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam quis mi a sem tempus varius sit amet nec ante. Nullam tincidunt erat eu quam malesuada tristique. Etiam faucibus diam sollicitudin velit rutrum, a vestibulum sapien porttitor. Ut rhoncus leo sit amet molestie hendrerit. Donec id nullam.',
-                likes: 10,
-                answers: 5,
-                isLiked: true,
-                user: {
-                    id: 1,
-                    username: "hmmm"
-                },
-                category: {
-                    id: 1,
-                    name: "hayooo"
-                }
+        (async () => {
+            const param: QuestionParam = {
+                pageNo: pageRef.current,
+                pageSize: 10
             }
-        )
-        setQuestions(curr)
+            try {
+                const [questionsResult, page] = await questionRequest.getLikedByUser(user.id, param)
+                if (questionsResult.length > 0) {
+                    setQuestions(prev => {
+                        return prev.concat(questionsResult)
+                    })
+                    pageRef.current = page + 1
+                }
+            } catch (error) {
+                
+            }
+
+        })()
     }
+    useEffect(() => {
+        loadMore()
+    }, [])
 
     return <Sheet
         sx={{

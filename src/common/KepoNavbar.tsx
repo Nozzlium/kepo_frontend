@@ -1,11 +1,11 @@
-import { Box, Divider, List, ListItem, ListItemButton, Dropdown, MenuButton, Menu, MenuItem, ListItemDecorator } from "@mui/joy"
+import { Box, Divider, List, ListItem, ListItemButton, Dropdown, MenuButton, Menu, MenuItem, ListItemDecorator, Sheet } from "@mui/joy"
 import { NavigateOptions, NavigateProps, useNavigate } from "react-router-dom"
 import icon from "../asset/icon.png"
 import { AccountBox, Logout } from "@mui/icons-material"
 import { Ref, forwardRef, useEffect, useRef, useState } from "react"
 import User from "../data/User"
 import userDetailRequest, { UserDetailsRequest } from "../request/UserDetailsRequest"
-import UnauthorizedError from "../error/UnauthorizedError"
+import { UnauthorizedError } from "../error/KepoError"
 import Progress from "./Progress"
 
 interface Prop {}
@@ -30,6 +30,13 @@ const KepoNavbar = forwardRef((
             replace: false
         }
         navigate("/", props)
+    }
+
+    const goToLogin = () => {
+        const props: NavigateOptions = {
+            replace: false
+        }
+        navigate("/login", props)
     }
 
     const onUserOptionSelect = (
@@ -107,16 +114,21 @@ const KepoNavbar = forwardRef((
     }
 
     useEffect(() => {
-        console.log("called")
         loadUser()
     }, [])
 
-    return <Box
+    return <Sheet
         component="nav"
         sx={{
             flexGrow: 1,
+            boxShadow: 'md',
+            position: "fixed",
+            width: "100%",
+            overflow: 'hidden',
+            margin: 0,
+            top: 0,
+            zIndex: 1
         }}
-        ref={ref}
     >
         <List orientation="horizontal" role="menubar">
             <ListItem role="none">
@@ -134,7 +146,7 @@ const KepoNavbar = forwardRef((
             </ListItem>
         </List>
         <Divider/>
-    </Box>
+    </Sheet>
 })
 
 export default KepoNavbar
