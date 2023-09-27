@@ -117,6 +117,14 @@ const FeedArea = () => {
         })
     };
 
+    const loadMore = () => {
+        setQuestionsState(prev => {
+            const next = {...prev}
+            next.status = UIStatus.LOADING
+            return next
+        })
+    }
+
     const listItem = questionsState.data.map(question => 
         <ListItem key={question.id}><KepoQuestionCard question={question} /></ListItem>
     ) 
@@ -168,7 +176,7 @@ const FeedArea = () => {
                     <Button 
                         variant="plain" 
                         color="neutral" 
-                        onClick={() => loadQuestions()} 
+                        onClick={() => loadMore()} 
                         loading={questionsState.status === UIStatus.LOADING}>Load More</Button>
                 </>
             }

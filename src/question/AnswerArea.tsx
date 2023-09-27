@@ -15,64 +15,113 @@ import { useParams } from "react-router-dom"
 import questionRequest from "../request/QuestionRequest"
 import answerRequest from "../request/AnswerRequest"
 import MainKepoCreateButton from "../common/MainKepoCreateButton"
+import { UIStatus } from "../lib/ui-status"
+
+interface QuestionState {
+    status: UIStatus.LOADING | UIStatus.SUCCESS | UIStatus.ERROR,
+    data?: Question
+}
+
+interface AnswersState {
+    status: UIStatus.IDLE | UIStatus.LOADING | UIStatus.SUCCESS | UIStatus.ERROR,
+    page: number,
+    data: Answer[]
+}
 
 type RouteParams = {
     id: string
 }
 
 const AnswerArea = () => {
-    const [isQuestionLoading, setIsQuestionLoading] = useState<boolean>(true)
-    const [answers, setAnswers] = useState<Answer[]>(Array())
-    const [isAnswersLoading, setIsAnswersLoading] = useState<boolean>(true)
+    const [questionState, setQuestionState] = useState<QuestionState>({
+        status: UIStatus.LOADING
+    })
+    const [answersState, setAnswersState] = useState<AnswersState>({
+        status: UIStatus.IDLE,
+        data: [],
+        page: 0
+    })
     const [answerDialogOpen, setAnswerDialogOpen] = useState<boolean>(false)
-    const question = useRef<Question>()
-    const page = useRef<number>(1)
 
     const { id } = useParams<RouteParams>()
 
     const onAnswerSubmit = (answer: Answer) => {
-        const curr = answers.slice()
-        curr.splice(0, 0, answer)
-        setAnswers(curr)
+        // const curr = answers.slice()
+        // curr.splice(0, 0, answer)
+        // setAnswers(curr)
     }
 
     const loadQuestion: (id: string) => void = (id: string) => {
-        setIsQuestionLoading(true);
-        (async () => {
-            const questionResult = await questionRequest.getById(id)
-            question.current = questionResult
-            setIsQuestionLoading(false)
-            loadAnswers()
-        })()
+        try {
+            (async () => {
+                const questionResult = await questionRequest.getById(id)
+                setQuestionState(prev => {
+                    const next = {...prev}
+                    next.data = questionResult
+                    next.status = UIStatus.SUCCESS
+                    return next
+                })
+            })()
+        } catch (error) {
+
+        }
     }
 
     const loadAnswers = () => {
-        setIsAnswersLoading(true);
-        (async () => {
-            if (question.current) {
-                const curr = answers.slice()
-                const params: AnswerParam = {
-                    pageNo: page.current,
-                    pageSize: 10
+        try {
+            (async () => {
+                if (questionState.status === UIStatus.SUCCESS && questionState.data) {
+                    const [answersResult, currentPage] = await answerRequest.getByQuestion(
+                        questionState.data.id, {
+                            pageNo: answersState.page + 1,
+                            pageSize: 10
+                    })
+                    setAnswersState(prev => {
+                        const next = {...prev}
+                        next.data = next.data.concat(answersResult)
+                        next.page = currentPage
+                        next.status = UIStatus.SUCCESS
+                        return next
+                    })
                 }
-                const [answersResult, currentPage] = await answerRequest.getByQuestion(question.current.id, params)
-                const result = curr.concat(answersResult)
-                page.current = currentPage + 1
-                setIsAnswersLoading(false)
-                setAnswers(result)
-            }
-        })()
+            })()   
+        } catch (error) {
+            
+        }
+    }
+
+    const loadMore = () => {
+        setAnswersState(prev => {
+            const next = {...prev}
+            next.status = UIStatus.LOADING
+            return next
+        })
     }
 
     useEffect(() => {
-        loadQuestion(id ? id : '0')
-    }, [])
+        if (questionState.status === UIStatus.LOADING) {
+            loadQuestion(id ?? '0')
+        }
+        if (questionState.status === UIStatus.SUCCESS) {
+            setAnswersState(prev => {
+                const next = {...prev}
+                next.status = UIStatus.LOADING
+                return next
+            })
+        }
+    }, [questionState])
+
+    useEffect(() => {
+        if (answersState.status === UIStatus.LOADING) {
+            loadAnswers()
+        }
+    }, [answersState])
 
     const openNewAnswerDialog = () => {
         setAnswerDialogOpen(!answerDialogOpen)
     }
 
-    const listItem = answers.map(answer => (
+    const listItem = answersState.data.map(answer => (
         <li><KepoAnswerCard answer={answer}/></li>
     ))
 
@@ -95,32 +144,36 @@ const AnswerArea = () => {
         })}
     >
         {
-            isQuestionLoading || !question.current ?
+            questionState.status === UIStatus.LOADING || !questionState.data ?
                 <Progress /> :
                 <>
-                    <KepoQuestionCard question={question.current}/>
+                    <KepoQuestionCard question={questionState.data}/>
                     <NewAnswerModal 
                         open={answerDialogOpen} 
                         setOpen={setAnswerDialogOpen} 
                         onAnswerPosted={onAnswerSubmit}
-                        question={question.current}
+                        question={questionState.data}
                     />
+                    <MainKepoCreateButton text="Write Answer" onClick={() => openNewAnswerDialog()} />
+                    <Sheet
+                        sx={{
+                            borderRadius: 'sm',
+                            boxShadow: 'md'
+                        }}
+                    >
+                        <ul style={{
+                            listStyleType: 'none',
+                            padding: 0
+                        }}>{listItem}</ul>
+                    </Sheet>
+                    <Button 
+                        variant="plain" 
+                        color="neutral" 
+                        onClick={() => loadMore()} 
+                        loading={answersState.status === UIStatus.LOADING}
+                    >Load More</Button>
                 </>
         }
-        <MainKepoCreateButton text="Write Answer" onClick={() => openNewAnswerDialog()} />
-        <Sheet
-            sx={{
-                borderRadius: 'sm',
-                boxShadow: 'md'
-            }}
-        >
-            <ul style={{
-                listStyleType: 'none',
-                padding: 0
-            }}>{listItem}</ul>
-        </Sheet>
-        <Button variant="plain" color="neutral" onClick={() => loadAnswers()} loading={isAnswersLoading}>Load More</Button>
-        
     </Box>
 }
 
