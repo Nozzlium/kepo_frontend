@@ -1,6 +1,4 @@
-import { Box, Button, CircularProgress, Sheet } from "@mui/joy"
-import QuestionList from "./QuestionList"
-import { Create } from "@mui/icons-material"
+import { Box, Button, CircularProgress, ListItem, Select, Sheet, Option, List } from "@mui/joy"
 import { useEffect, useRef, useState } from "react"
 import NewQuestionModal from "./NewQuestionModal"
 import Progress from "../common/Progress"
@@ -10,13 +8,36 @@ import CategoriesResponse from "../response/CategoriesResponse"
 import Question from "../data/Question"
 import { useNavigate } from "react-router-dom"
 import MainKepoCreateButton from "../common/MainKepoCreateButton"
+import { UIStatus } from "../lib/ui-status"
+import KepoQuestionCard from "../common/KepoQuestionCard"
+import questionRequest from "../request/QuestionRequest"
+
+interface CategoriesState {
+    status: UIStatus.IDLE | UIStatus.SUCCESS | UIStatus.LOADING | UIStatus.ERROR,
+    data: Category[],
+}
+
+interface QuestionsState {
+    status: UIStatus.IDLE | UIStatus.LOADING | UIStatus.SUCCESS | UIStatus.ERROR,
+    data: Question[],
+    page: number,
+    selectedCategory: number
+}
 
 const FeedArea = () => {
     const navigate = useNavigate()
-    const [isCategoriesLoading, setIsCategoryLoading] = useState<boolean>(true)
+    const [categoriesState, setCategoriesState] = useState<CategoriesState>({
+        status: UIStatus.LOADING,
+        data: [],
+    })
+    const [questionsState, setQuestionsState] = useState<QuestionsState>({
+        status: UIStatus.IDLE,
+        data: [],
+        selectedCategory: 0,
+        page: 0
+    })
     const [newQuestionModalOpen, setNewQuestoionModalOpen] = useState<boolean>(false)
-    const [questions, setQuestions] = useState<Question[]>([])
-    const categories = useRef<Category[]>([])
+
 
     const openNewQuestionDialog = () => {
         setNewQuestoionModalOpen(true)
@@ -26,10 +47,37 @@ const FeedArea = () => {
         (
             (async () => {
                 const response = await axios.get<CategoriesResponse>('http://localhost:2637/api/category')
-                categories.current = response.data.data
-                setIsCategoryLoading(false)
+                setCategoriesState(prev => {
+                    const next = {...prev}
+                    next.status = UIStatus.SUCCESS
+                    next.data = response.data.data
+                    return next
+                })
             })()
         )
+    }
+
+    const loadQuestions = () => {
+        try {
+            (async () => {
+                const [questions, page] = await questionRequest.getFeed({
+                    pageNo: questionsState.page + 1,
+                    pageSize: 10,
+                    category: questionsState.selectedCategory
+                })
+                if (questions.length > 0) {
+                    setQuestionsState(prev => {
+                        const next = {...prev}
+                        next.page = page
+                        next.data = next.data.concat(questions)
+                        next.status = UIStatus.SUCCESS
+                        return next
+                    })
+                }
+            })()
+        } catch (error) {
+            
+        }
     }
 
     const onQuestionPosted = (question: Question) => {
@@ -37,8 +85,45 @@ const FeedArea = () => {
     }
 
     useEffect(() => {
-        loadCategories()
-    }, [])
+        if (categoriesState.status === UIStatus.LOADING) {
+            loadCategories()
+        }
+        if (categoriesState.status === UIStatus.SUCCESS) {
+            setQuestionsState(prev => {
+                const next = {...prev}
+                next.status = UIStatus.LOADING
+                return next
+            })
+        }
+    }, [categoriesState])
+
+    useEffect(() => {
+        if (questionsState.status === UIStatus.LOADING) {
+            loadQuestions()
+        } 
+    }, [questionsState])
+
+    const handleChange = (
+        _event: React.SyntheticEvent | null,
+        newValue: number | null,
+    ) => {
+        setQuestionsState(_prev => {
+            return {
+                page: 0,
+                selectedCategory: newValue ?? 0,
+                data: [],
+                status: UIStatus.LOADING
+            }
+        })
+    };
+
+    const listItem = questionsState.data.map(question => 
+        <ListItem key={question.id}><KepoQuestionCard question={question} /></ListItem>
+    ) 
+
+    const categoryItems = categoriesState.data.map(category => 
+        <Option key={category.id} value={category.id}>{category.name}</Option>
+    )
 
     return <Box
         sx={(theme) => ({
@@ -63,14 +148,29 @@ const FeedArea = () => {
                 onQuestionPosted={onQuestionPosted}
             />
             {
-                isCategoriesLoading ? 
-                    <Progress/> : 
-                    <QuestionList 
-                        categories={categories.current}
-                        questions={questions}
-                        setQuestions={setQuestions}
-                    /> 
-
+                categoriesState.status === UIStatus.LOADING ? 
+                <Progress/> : 
+                <>
+                    <Select 
+                        defaultValue={1}
+                        variant="soft"
+                        sx={{
+                            my: 1,
+                            boxShadow: 'lg'
+                        }}
+                        onChange={handleChange}
+                    >{categoryItems}</Select>
+                    <List sx={{
+                        listStyleType: 'none',
+                        p: 0,
+                        mb: 1
+                    }} >{listItem}</List>
+                    <Button 
+                        variant="plain" 
+                        color="neutral" 
+                        onClick={() => loadQuestions()} 
+                        loading={questionsState.status === UIStatus.LOADING}>Load More</Button>
+                </>
             }
         </Box>
 }

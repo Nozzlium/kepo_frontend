@@ -1,66 +1,111 @@
 import KepoUsernameField from "../common/KepoUsernameField"
 import KepoPasswordField from "../common/KepoPasswordField"
 import { Alert, Button, IconButton, Link, Sheet, Typography } from "@mui/joy"
-import { FormEvent, useRef, useState } from "react"
+import { Dispatch, FormEvent, SetStateAction, useEffect, useRef, useState } from "react"
 import { LoginParam }from "../param/AuthParam"
 import { useNavigate } from "react-router-dom"
-import { UnauthorizedError } from "../error/KepoError"
+import { KepoError, UnauthorizedError } from "../error/KepoError"
 import authRequest from "../request/AuthRequest"
 import { Close } from "@mui/icons-material"
 import token from "../lib/Token"
+import { UIStatus } from "../lib/ui-status"
+
+interface LoginData {
+    identity: string,
+    password: string
+}
+
+interface LoginState {
+    data: LoginData,
+    status: UIStatus.IDLE | UIStatus.LOADING | UIStatus.SUCCESS | UIStatus.ERROR,
+    error?: KepoError
+}
+
+const CredentialAlert = (
+    {
+        loginState,
+        setLoginState
+    }:
+    {
+        loginState: LoginState,
+        setLoginState: Dispatch<SetStateAction<LoginState>>
+    }
+) => {
+    if (loginState.status === UIStatus.ERROR && loginState.error) {
+        return <Alert 
+            variant="soft"
+            color="danger"
+            endDecorator={
+                <IconButton variant="solid" size="sm" color="danger" onClick={() => {
+                    setLoginState(prev => {
+                        return {
+                            data: prev.data,
+                            status: UIStatus.IDLE
+                        }
+                    })
+                }}>
+                    <Close />
+                </IconButton>
+            }
+            >
+            Invalid Credentials
+        </Alert>
+    }
+    return null
+}
 
 const LoginForm = () => {
     const navigate = useNavigate()
-    const [isAlertShown, setIsAlertShown] = useState<boolean>(false)
+    const [loginState, setLoginState] = useState<LoginState>({
+        data: {
+            identity: '',
+            password: ''
+        },
+        status: UIStatus.IDLE,
+    })
 
-    const submit = (event: FormEvent<HTMLFormElement>) => {
-        event.preventDefault()
-        const formData = new FormData(event.currentTarget)
-        const identity = formData.get("email")?.toString()
-        const password = formData.get("password")?.toString()
-        const param: LoginParam = {
-            identity: identity ?? "",
-            password: password ?? ""
-        };
+    const login = (param: LoginParam) => {
         (async () => {
             try {
                 const savedToken = await authRequest.login(param)
-                token.saveToken(savedToken)
                 token.setToken(savedToken)
-                navigate("/", {replace: true})
+                setLoginState(prev => {
+                    const next = {...prev}
+                    next.status = UIStatus.SUCCESS
+                    return next
+                })
             } catch (error) {
-                if (error instanceof UnauthorizedError) {
-                    setIsAlertShown(true)
-                }
+                if (error instanceof KepoError) {
+                    setLoginState(prev => {
+                        const next = {...prev}
+                        next.status = UIStatus.ERROR
+                        next.error = error as KepoError
+                        return next
+                    })
+                } 
             }
         })()
     }
 
-    const CredentialAlert = () => {
-        if (isAlertShown) {
-            return <Alert 
-                variant="soft"
-                color="danger"
-                endDecorator={
-                    <IconButton variant="solid" size="sm" color="danger" onClick={() => {
-                        setIsAlertShown(false)
-                    }}>
-                        <Close />
-                    </IconButton>
-                }
-                >
-                Invalid Credentials
-            </Alert>
+    useEffect(() => {
+        if (loginState.status === UIStatus.LOADING) {
+            const param: LoginParam = {
+                identity: loginState.data.identity,
+                password: loginState.data.password
+            }
+            login(param)
         }
-        return null
-    }
+        if (loginState.status === UIStatus.SUCCESS) {
+            navigate("/", {replace: true})
+        }
+    }, [loginState])
 
     return <Sheet
         variant="soft"
         sx={{
             width: 300,
-            py: 3, // padding top & bottom
-            px: 2, // padding left & right
+            py: 3,
+            px: 2,
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'stretch',
@@ -68,9 +113,19 @@ const LoginForm = () => {
             gap: 1
         }}
     >
-        <CredentialAlert/>
+        <CredentialAlert 
+            loginState={loginState} 
+            setLoginState={setLoginState}
+        />
         <form 
-            onSubmit={submit}
+            onSubmit={(event) => {
+                event.preventDefault()
+                setLoginState(prev => {
+                    const next = {...prev}
+                    next.status = UIStatus.LOADING
+                    return next
+                })
+            }}
         >
             <Sheet
                 sx={{
@@ -80,8 +135,20 @@ const LoginForm = () => {
                 }}
                 variant="soft"
             >
-                <KepoUsernameField/>
-                <KepoPasswordField/>
+                <KepoUsernameField value={loginState.data.identity} onChange={(event) => {
+                    setLoginState(prev => {
+                        const next = {...prev}
+                        next.data.identity = event.target.value
+                        return next
+                    })
+                }}/>
+                <KepoPasswordField value={loginState.data.password} onChange={(event) => {
+                    setLoginState(prev => {
+                        const next = {...prev}
+                        next.data.password = event.target.value
+                        return next
+                    })
+                }}/>
                 <Button sx={{ mt: 1 }} type="submit" >Log in</Button>
             </Sheet>
         </form>

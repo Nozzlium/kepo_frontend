@@ -119,7 +119,7 @@ const RegisterForm = () => {
             register()
         }
         if (registerState.status === UIStatus.SUCCESS) {
-            navigate("/", {replace: true})
+            navigate("/login", {replace: true})
         }
     }, [registerState])
 
