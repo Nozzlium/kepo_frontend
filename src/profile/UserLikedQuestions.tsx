@@ -5,6 +5,14 @@ import Question from "../data/Question"
 import User from "../data/User"
 import questionRequest from "../request/QuestionRequest"
 import { QuestionParam } from "../param/QuestionParam"
+import { UIStatus } from "../lib/ui-status"
+import axios, { CancelToken } from "axios"
+
+interface QuestionsState {
+    page: number,
+    data: Question[],
+    status: UIStatus.LOADING | UIStatus.SUCCESS | UIStatus.ERROR
+}
 
 const UserLikedQuestions = (
     {
@@ -12,36 +20,59 @@ const UserLikedQuestions = (
     }:{
         user: User
     }) => {
-    const [questions, setQuestions] = useState<Question[]>([])
-    const pageRef = useRef<number>(1)
+    const [questionsState, setQuestionsState] = useState<QuestionsState>({
+        page: 0,
+        data: [],
+        status: UIStatus.LOADING
+    })
 
-    const items = questions.map(question => 
+    const items = questionsState.data.map(question => 
         <ListItem key={question.id} sx={{ px:0 }}><KepoQuestionCard question={question}/></ListItem>
     )
 
-    const loadMore = () => {
+    const loadQuestions = (
+        cancelToken?: CancelToken
+    ) => {
         (async () => {
-            const param: QuestionParam = {
-                pageNo: pageRef.current,
-                pageSize: 10
-            }
             try {
-                const [questionsResult, page] = await questionRequest.getLikedByUser(user.id, param)
-                if (questionsResult.length > 0) {
-                    setQuestions(prev => {
-                        return prev.concat(questionsResult)
-                    })
-                    pageRef.current = page + 1
-                }
+                const [questionsResult, page] = await questionRequest.getLikedByUser(user.id, {
+                    pageNo: questionsState.page + 1,
+                    pageSize: 10
+                }, cancelToken)
+                setQuestionsState(prev => {
+                    const next = {...prev}
+                    if (questionsResult.length > 0) {
+                        next.data = prev.data.concat(questionsResult)
+                        next.page = page
+                    }
+                    next.status = UIStatus.SUCCESS
+                    return next
+                })
             } catch (error) {
                 
             }
-
         })()
     }
+
+    const loadMore = () => {
+        setQuestionsState(prev => {
+            const next = {...prev}
+            next.status = UIStatus.LOADING
+            return next
+        })
+    }
+
     useEffect(() => {
-        loadMore()
-    }, [])
+        const CancelToken = axios.CancelToken;
+        const source = CancelToken.source();
+        if (questionsState.status === UIStatus.LOADING) {
+            loadQuestions(source.token)
+        }
+
+        return () => {
+            source.cancel()
+        }
+    }, [questionsState])
 
     return <Sheet
         sx={{
@@ -53,7 +84,12 @@ const UserLikedQuestions = (
             listStyleType: 'none',
             padding: 0
         }} >{items}</List>
-        <Button variant="plain" color="neutral" onClick={() => loadMore()}>Load More</Button>    
+        <Button 
+            variant="plain" 
+            color="neutral" 
+            onClick={() => loadMore()}
+            loading={questionsState.status === UIStatus.LOADING}
+        >Load More</Button>    
     </Sheet>
 }
 

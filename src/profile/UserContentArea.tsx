@@ -7,39 +7,45 @@ import { useParams } from "react-router-dom"
 import userDetailRequest from "../request/UserDetailsRequest"
 import { useEffect, useRef, useState } from "react"
 import Progress from "../common/Progress"
-
-const dummy: User = {
-    id: 1,
-    username: "Chun-Li"
-}
+import { UIStatus } from "../lib/ui-status"
 
 type RouteParams = {
     id: string
 }
 
+interface UserState {
+    status: UIStatus.LOADING | UIStatus.SUCCESS | UIStatus.ERROR,
+    data?: User 
+}
+
 const UserContentArea = () => {
-    const [isUserLoading, setUserLoading] = useState<boolean>()
-    const user = useRef<User>()
+    const [userState, setUserState] = useState<UserState>({
+        status: UIStatus.LOADING,
+    })
 
     const { id } = useParams<RouteParams>()
 
     const loadUser = (userId: string) => {
         try {
-            setUserLoading(true);
             (async () => {
                 const userIdNumber = parseInt(userId);
                 const userResult = await userDetailRequest.getDetailsById(userIdNumber)
-                user.current = userResult
-                setUserLoading(false)
+                setUserState(prev => {
+                    const next = {...prev}
+                    next.status = UIStatus.SUCCESS
+                    next.data = userResult
+                    return next
+                })
             })()
         } catch (error) {
-            console.log("caught")
         }
     }
 
     useEffect(() => {
-        loadUser(id ? id : "0")
-    }, [])
+        if (userState.status === UIStatus.LOADING) {
+            loadUser(id ? id : "0")
+        }
+    }, [userState])
 
     return <Box
         sx={(theme) => ({
@@ -58,7 +64,7 @@ const UserContentArea = () => {
         })}
     >
         {
-            (isUserLoading || !user.current) ?
+            (userState.status === UIStatus.LOADING || !userState.data) ?
                 <Progress /> :
                 <>
                     <Typography 
@@ -67,7 +73,7 @@ const UserContentArea = () => {
                             my: 1,
                             textAlign: 'start'
                         }}
-                    ><b>{user.current.username}'s activities</b></Typography>
+                    ><b>{userState.data.username}'s activities</b></Typography>
                     <Tabs defaultValue={0}
                         sx={{
                             zIndex: 0,
@@ -83,13 +89,13 @@ const UserContentArea = () => {
                             <Tab>Likes</Tab>
                         </TabList>
                         <TabPanel value={0}>
-                            <UserQuestionsList user={user.current}/>
+                            <UserQuestionsList user={userState.data}/>
                         </TabPanel>
                         <TabPanel value={1}>
-                            <UserAnswerList user={user.current}/>
+                            <UserAnswerList user={userState.data}/>
                         </TabPanel>
                         <TabPanel value={2}>
-                            <UserLikedQuestions user={user.current}/>
+                            <UserLikedQuestions user={userState.data}/>
                         </TabPanel>
                     </Tabs>
                 </>

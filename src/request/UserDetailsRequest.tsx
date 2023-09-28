@@ -5,6 +5,7 @@ import NoTokenError from "../error";
 import { UnauthorizedError } from "../error/KepoError";
 import UserResponse from "../response/UserResponse";
 import networkCall from "./NetworkCall";
+import { CancelToken } from "axios";
 
 export class UserDetailsRequest {
     getDetails: () => Promise<User> = async () => {
@@ -18,7 +19,7 @@ export class UserDetailsRequest {
             return userResponse.data
     }
 
-    getDetailsById: (userId: number) => Promise<User> = async (userId: number) => {
+    getDetailsById: (userId: number, cancelToken?: CancelToken) => Promise<User> = async (userId: number) => {
         const response = await networkCall.get<BaseResponse>(`http://localhost:2637/api/user/${userId}/details`)
 
         const userResponse = response.data as UserResponse

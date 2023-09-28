@@ -78,8 +78,10 @@ const AnswerArea = () => {
                     })
                     setAnswersState(prev => {
                         const next = {...prev}
-                        next.data = next.data.concat(answersResult)
-                        next.page = currentPage
+                        if (answersResult.length > 0) {
+                            next.data = next.data.concat(answersResult)
+                            next.page = currentPage
+                        }
                         next.status = UIStatus.SUCCESS
                         return next
                     })

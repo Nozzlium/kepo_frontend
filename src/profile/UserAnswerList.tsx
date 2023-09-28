@@ -1,23 +1,30 @@
 import { Box, Button, List, ListItem, Sheet } from "@mui/joy"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import Answer from "../data/Answer"
 import KepoAnswerCard from "../question/KepoAnswercard"
 import User from "../data/User"
-import axios from "axios"
-import { AnswersResponse } from "../response/AnswersResponse"
-import { AnswerParam } from "../param/AnswerParam"
 import answerRequest from "../request/AnswerRequest"
+import { UIStatus } from "../lib/ui-status"
+import axios, { CancelToken } from "axios"
+
+interface AnswersState {
+    page: number,
+    data: Answer[],
+    status: UIStatus.LOADING | UIStatus.SUCCESS | UIStatus.ERROR
+}
 
 const UserAnswerList = ({
     user
 }:{
     user: User
 }) => {
-    const [answers, setAnswers] = useState<Answer[]>([])
-    const [isAnswersLoading, setIsAnswersLoading] = useState<boolean>(true)
-    const page = useRef<number>(1)
+    const [answersState, setAnswersState] = useState<AnswersState>({
+        page: 0,
+        data: [],
+        status: UIStatus.LOADING
+    })
 
-    const items = answers.map(answer => 
+    const items = answersState.data.map(answer => 
         <ListItem sx={{
             display: 'flex',
             flexDirection: 'column',
@@ -25,29 +32,49 @@ const UserAnswerList = ({
         }}><KepoAnswerCard answer={answer}/></ListItem>
     )
 
-    const load = () => {
-        setIsAnswersLoading(true);
+    const loadAnswers = (
+        cancelToken?: CancelToken
+    ) => {
         (async () => {
-            const param: AnswerParam = {
-                pageNo: page.current,
-                pageSize: 10
-            }
-            const [answersResult, currentPage] = await answerRequest.getByUser(user.id, param)
-            if (answersResult.length > 0) {
-                const curr = answers.slice()
-                const result = curr.concat(answersResult)
-                page.current = currentPage + 1
-                setIsAnswersLoading(false)
-                setAnswers(result)
-            } else {
-                setIsAnswersLoading(false)
+            try {
+                const [answersResult, currentPage] = await answerRequest.getByUser(user.id, {
+                    pageNo: answersState.page + 1,
+                    pageSize: 10
+                }, cancelToken)
+                setAnswersState(prev => {
+                    const next = {...prev}
+                    if (answersResult.length > 0) {
+                        next.data = prev.data.concat(answersResult)
+                        next.page = currentPage
+                    }
+                    next.status = UIStatus.SUCCESS
+                    return next
+                })
+            } catch (error) {
+                
             }
         })()
     }
 
+    const loadMore = () => {
+        setAnswersState(prev => {
+            const next = {...prev}
+            next.status = UIStatus.LOADING
+            return next
+        })
+    }
+
     useEffect(() => {
-        load()
-    }, [])
+        const cancelToken = axios.CancelToken;
+        const source = cancelToken.source();
+        if (answersState.status === UIStatus.LOADING) {
+            loadAnswers(source.token)
+        }
+
+        return () => {
+            source.cancel()
+        }
+    }, [answersState])
 
     return <Box
         sx={{
@@ -59,7 +86,12 @@ const UserAnswerList = ({
             listStyleType: 'none',
             padding: 0
         }} >{items}</List>
-        <Button variant="plain" color="neutral" onClick={() => load()} loading={isAnswersLoading}>Load More</Button>    
+        <Button 
+            variant="plain" 
+            color="neutral" 
+            onClick={() => loadMore()}
+            loading={answersState.status === UIStatus.LOADING}
+        >Load More</Button>    
     </Box>
 }
 

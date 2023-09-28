@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react"
 import NewQuestionModal from "./NewQuestionModal"
 import Progress from "../common/Progress"
 import Category from "../data/Category"
-import axios from "axios"
+import axios, { CancelToken } from "axios"
 import CategoriesResponse from "../response/CategoriesResponse"
 import Question from "../data/Question"
 import { useNavigate } from "react-router-dom"
@@ -47,6 +47,7 @@ const FeedArea = () => {
         (
             (async () => {
                 const response = await axios.get<CategoriesResponse>('http://localhost:2637/api/category')
+                console.log("selesai get category")
                 setCategoriesState(prev => {
                     const next = {...prev}
                     next.status = UIStatus.SUCCESS
@@ -57,7 +58,9 @@ const FeedArea = () => {
         )
     }
 
-    const loadQuestions = () => {
+    const loadQuestions = (
+        cancelToken?: CancelToken
+    ) => {
         try {
             (async () => {
                 const [questions, page] = await questionRequest.getFeed({
@@ -65,15 +68,15 @@ const FeedArea = () => {
                     pageSize: 10,
                     category: questionsState.selectedCategory
                 })
-                if (questions.length > 0) {
-                    setQuestionsState(prev => {
-                        const next = {...prev}
+                setQuestionsState(prev => {
+                    const next = {...prev}
+                    if (questions.length > 0) {
                         next.page = page
                         next.data = next.data.concat(questions)
-                        next.status = UIStatus.SUCCESS
-                        return next
-                    })
-                }
+                    }
+                    next.status = UIStatus.SUCCESS
+                    return next
+                })
             })()
         } catch (error) {
             
@@ -86,9 +89,11 @@ const FeedArea = () => {
 
     useEffect(() => {
         if (categoriesState.status === UIStatus.LOADING) {
+            console.log("masuk useeffect atas")
             loadCategories()
         }
         if (categoriesState.status === UIStatus.SUCCESS) {
+            console.log("masuk useeffect bawah")
             setQuestionsState(prev => {
                 const next = {...prev}
                 next.status = UIStatus.LOADING

@@ -1,3 +1,4 @@
+import { CancelToken } from "axios";
 import Answer from "../data/Answer";
 import { UnauthorizedError } from "../error/KepoError";
 import { AnswerParam, PostAnswerParam } from "../param/AnswerParam";
@@ -13,9 +14,12 @@ export class AnswerRequest {
         return [responseData.answers, responseData.page]
     }
 
-    getByUser: (userId: number, param: AnswerParam) => Promise<[Answer[], number]> = async (userId: number, param: AnswerParam) => {
+    getByUser: (userId: number, param: AnswerParam, cancelToken?: CancelToken) => Promise<[Answer[], number]> = async (userId: number, param: AnswerParam, cancelToken?: CancelToken) => {
         const url = `http://localhost:2637/api/user/${userId}/answer`
-        const response = await networkCall.get<AnswersResponse>(url, {params: param})
+        const response = await networkCall.get<AnswersResponse>(url, {
+            params: param,
+            cancelToken: cancelToken
+        })
         const responseData = response.data.data
         return [responseData.answers, responseData.page]
     }
