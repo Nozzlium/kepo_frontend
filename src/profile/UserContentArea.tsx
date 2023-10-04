@@ -1,4 +1,4 @@
-import { Box, Sheet, Tab, TabList, TabPanel, Tabs, Typography } from "@mui/joy"
+import { Box, Tab, TabList, TabPanel, Tabs, Typography } from "@mui/joy"
 import UserQuestionsList from "./UserQuestionsList"
 import UserAnswerList from "./UserAnswerList"
 import UserLikedQuestions from "./UserLikedQuestions"

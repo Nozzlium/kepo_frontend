@@ -1,59 +1,130 @@
-import { Box, Button, FormControl, ModalDialog, Sheet, Textarea, Typography } from "@mui/joy"
+import { Alert, Box, Button, FormControl, IconButton, ModalClose, ModalDialog, Sheet, Textarea, Typography } from "@mui/joy"
 import Modal from "@mui/joy/Modal"
-import { ChangeEvent, Dispatch, SetStateAction, useState } from "react"
+import { ChangeEvent, Dispatch, SetStateAction, useEffect, useState } from "react"
 import { PostAnswerParam } from "../param/AnswerParam"
 import answerRequest from "../request/AnswerRequest"
 import Answer from "../data/Answer"
 import Question from "../data/Question"
+import { UIStatus } from "../lib/ui-status"
+import { DialogContent } from "@mui/material"
+import { KepoError, UnauthorizedError } from "../error/KepoError"
+import { useNavigate } from "react-router-dom"
+import { Close } from "@mui/icons-material"
+import KepoConfirmationDialog from "../common/KepoConfirmationDialog"
+
+interface NewAnswerState {
+    answer: string,
+    posted?: Answer,
+    error?: KepoError,
+    shouldClose: boolean,
+    shouldConfirm: boolean,
+    status: UIStatus.IDLE | UIStatus.LOADING | UIStatus.ERROR | UIStatus.SUCCESS
+}
 
 const NewAnswerModal = ({
     open,
-    setOpen,
+    closeDialog,
     question,
-    onAnswerPosted
+    onAnswerPosted,
 }: {
     open: boolean,
-    setOpen: Dispatch<SetStateAction<boolean>>,
+    closeDialog: () => void,
     question: Question,
     onAnswerPosted: (answer: Answer) => void
 }) => {
-    const [isPostAnswerLoading, setPostAnswerLoading] = useState<boolean>()
-    const [createanswerBody, setCreateQuestionBody] = useState<PostAnswerParam>({
-        questionId: question.id,
-        content: ""
+    const navigate = useNavigate()
+    const [newAnswerState, setNewAnswerState] = useState<NewAnswerState>({
+        answer: "",
+        shouldClose: false,
+        shouldConfirm: false,
+        status: UIStatus.IDLE
     })
 
-    const isValid = createanswerBody.content.length > 0
+    const isValid = newAnswerState.answer.length > 0
 
-    const closeDialog = () => {
-        setCreateQuestionBody({
-            questionId: 1,
-            content: ""
-        })
-        setOpen(false)
+    const onClose = () => {
+        if (newAnswerState.answer.length > 0) {
+            setNewAnswerState(prev => {
+                const next = {...prev}
+                next.shouldConfirm = true
+                return next
+            })
+        } else {
+            setNewAnswerState(_prev => {
+                return {
+                    answer: "",
+                    status: UIStatus.IDLE,
+                    shouldClose: true,
+                    shouldConfirm: false
+                }
+            })
+        }
     }
 
-    const submit = () => {
-        setPostAnswerLoading(true);
+    const postAnswer = () => {
         (async () => {
-            const answerResult = await answerRequest.postNewAnswer(createanswerBody)
-            setPostAnswerLoading(false)
-            onAnswerPosted(answerResult)
-            closeDialog()
+            try {
+                const answerResult = await answerRequest.postNewAnswer({
+                    questionId: question.id,
+                    content: newAnswerState.answer
+                })
+                setNewAnswerState(_prev => {
+                    return {
+                        posted: answerResult,
+                        status: UIStatus.SUCCESS,
+                        answer: "",
+                        shouldClose: true,
+                        shouldConfirm: false
+                    }
+                })
+            } catch (error) {
+                if (error instanceof UnauthorizedError) {
+                    navigate("/login")
+                    return
+                }
+
+                setNewAnswerState(prev => {
+                    const next = {...prev}
+                    next.status = UIStatus.ERROR
+                    next.error = new KepoError("UnknownError", "Unknown error")
+                    return next
+                })
+            }
         })()
     }
 
-    const onContentChange = (
-        event: ChangeEvent<HTMLTextAreaElement>
-    ) => {
-        const curr = {...createanswerBody}
-        curr.content = event.target.value
-        setCreateQuestionBody(curr)
-    }
+    useEffect(() => {
+        if (open) {
+            setNewAnswerState(_prev => {
+                return {
+                    answer: "",
+                    status: UIStatus.IDLE,
+                    shouldClose: false,
+                    shouldConfirm: false
+                }
+            })
+        }
+    }, [open])
+
+    useEffect(() => {
+        if (newAnswerState.status === UIStatus.LOADING) {
+            postAnswer()
+            return
+        } 
+
+        if (newAnswerState.status === UIStatus.SUCCESS && newAnswerState.posted) {
+            onAnswerPosted(newAnswerState.posted)
+            return
+        }
+
+        if (newAnswerState.shouldClose) {
+            closeDialog()
+        }
+    }, [newAnswerState])
 
     return <Modal 
         open={open} 
-        onClose={() => closeDialog()}
+        onClose={() => onClose()}
         sx={{
             display: 'flex',
             justifyContent: 'center',
@@ -75,36 +146,107 @@ const NewAnswerModal = ({
                     minWidth: 700
                 }
               })}
-            size="lg"
+            size="md"
         >
-        <Sheet
-            sx={{
-                display: 'flex',
-                flexDirection: 'column',
-            }}
-        >
-            <FormControl>
-                <Textarea
-                    placeholder="Your answer here..."
-                    minRows={5}
-                    maxRows={5}
-                    onChange={(event) => onContentChange(event)}
-                    endDecorator={
-                        <Box
-                            sx={{
-                                display: 'flex',
-                                flex: 'auto',
-                                pt: 1,
-                                borderTop: '1px solid',
-                                borderColor: 'divider'
-                            }}
+            <ModalClose />
+            <KepoConfirmationDialog
+                open={newAnswerState.shouldConfirm}
+                title="Discard Answer?"
+                negativeMessage="Discard"
+                negativeAction={() => {
+                    setNewAnswerState(_prev => {
+                        return {
+                            answer: "",
+                            status: UIStatus.IDLE,
+                            shouldClose: true,
+                            shouldConfirm: false
+                        }
+                    })
+                }}
+                positiveMessage="Cancel"
+                positiveAction={() => {
+                    setNewAnswerState(prev => {
+                        const next = {...prev}
+                        next.shouldConfirm = false
+                        return next
+                    })
+                }}
+            />
+            <Box
+                sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    mt: 3
+                }}
+            >
+                {
+                    newAnswerState.status === UIStatus.ERROR && newAnswerState.error ?
+                    <Alert 
+                        variant="soft"
+                        color="danger"
+                        endDecorator={
+                            <IconButton variant="solid" size="sm" color="danger" onClick={() => {
+                                setNewAnswerState(prev => {
+                                    return {
+                                        answer: prev.answer,
+                                        shouldClose: prev.shouldClose,
+                                        status: UIStatus.IDLE,
+                                        shouldConfirm: prev.shouldConfirm
+                                    }
+                                })
+                            }}>
+                                <Close />
+                            </IconButton>
+                        }
                         >
-                            <Button sx={{ml: 'auto'}} disabled={!isValid} onClick={submit}>Submit</Button>     
-                        </Box>
-                    }
-                />
-            </FormControl>
-        </Sheet>
+                        {newAnswerState.error.message}
+                    </Alert>
+                    : null
+                }
+                <FormControl>
+                    <Textarea
+                        placeholder="Your answer here..."
+                        minRows={5}
+                        maxRows={5}
+                        sx={{
+                            '--Textarea-focusedThickness': '0'
+                        }}
+                        variant="plain"
+                        value={newAnswerState.answer}
+                        onChange={(event) => {
+                            setNewAnswerState(prev => {
+                                const next = {...prev}
+                                next.answer = event.target.value
+                                return next
+                            })
+                        }}
+                        endDecorator={
+                            <Box
+                                sx={{
+                                    display: 'flex',
+                                    flex: 'auto',
+                                    pt: 1,
+                                    borderTop: '1px solid',
+                                    borderColor: 'divider'
+                                }}
+                            >
+                                <Button 
+                                    sx={{ml: 'auto'}} 
+                                    disabled={!isValid} 
+                                    loading={newAnswerState.status === UIStatus.LOADING}
+                                    onClick={() => {
+                                        setNewAnswerState(prev => {
+                                            const next = {...prev}
+                                            next.status = UIStatus.LOADING
+                                            return next
+                                        })
+                                    }}
+                                >Submit</Button>     
+                            </Box>
+                        }
+                    />
+                </FormControl>
+            </Box>
         </ModalDialog>
     </Modal>
 }

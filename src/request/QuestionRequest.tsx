@@ -4,6 +4,7 @@ import { QuestionParam, PostQuestionParam } from "../param/QuestionParam";
 import QuestionsResponse from "../response/QuestionsResponse";
 import networkCall from "./NetworkCall";
 import QuestionResponse from "../response/QuestionResponse";
+import { UnauthorizedError } from "../error/KepoError";
 
 class QuestionRequest {
     getFeed: (param: QuestionParam) => Promise<[questions:Question[], page: number]> = async (param: QuestionParam) => {
@@ -11,8 +12,11 @@ class QuestionRequest {
         const responseData = response.data.data
         return [responseData.questions, responseData.page]
     }
-    getById: (id: string) => Promise<Question> = async (id: string) => {
-        const response = await networkCall.get<QuestionResponse>(`http://localhost:2637/api/question/${id}`)
+    getById: (id: string, signal?: AbortSignal) => Promise<Question> = async (id: string, signal?: AbortSignal) => {
+        const response = await networkCall.get<QuestionResponse>(
+            `http://localhost:2637/api/question/${id}`,
+            { signal: signal }
+        )
         const question = response.data.data
         return question
     }
@@ -42,6 +46,11 @@ class QuestionRequest {
     postQuestion: (param: PostQuestionParam) => Promise<Question> = async (param: PostQuestionParam) => {
         const url = `http://localhost:2637/api/question`
         const response = await networkCall.post<QuestionResponse>(url, param)
+
+        if (response.data.code == 401) {
+            throw new UnauthorizedError(response.data.status)
+        }
+
         return response.data.data
     }
 }

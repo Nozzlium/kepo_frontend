@@ -3,29 +3,28 @@ import KepoQuestionCard from "../common/KepoQuestionCard"
 import Question from "../data/Question"
 import Answer from "../data/Answer"
 import { useEffect, useRef, useState } from "react"
-import KepoAnswerCard from "./KepoAnswercard"
-import { Create } from "@mui/icons-material"
+import KepoAnswerCard from "../common/KepoAnswercard"
 import NewAnswerModal from "./NewAnswerModal"
-import axios from "axios"
-import { AnswersResponse } from "../response/AnswersResponse"
-import { AnswerParam } from "../param/AnswerParam"
 import Progress from "../common/Progress"
-import QuestionResponse from "../response/QuestionResponse"
-import { useParams } from "react-router-dom"
+import { useNavigate, useParams } from "react-router-dom"
 import questionRequest from "../request/QuestionRequest"
 import answerRequest from "../request/AnswerRequest"
 import MainKepoCreateButton from "../common/MainKepoCreateButton"
 import { UIStatus } from "../lib/ui-status"
+import User from "../data/User"
+import userDetailRequest from "../request/UserDetailsRequest"
 
-interface QuestionState {
+interface QuestionPageState {
     status: UIStatus.LOADING | UIStatus.SUCCESS | UIStatus.ERROR,
-    data?: Question
+    data?: Question,
+    user?: User
 }
 
 interface AnswersState {
     status: UIStatus.IDLE | UIStatus.LOADING | UIStatus.SUCCESS | UIStatus.ERROR,
     page: number,
-    data: Answer[]
+    data: Answer[],
+    newAnswerDialogOpen: boolean
 }
 
 type RouteParams = {
@@ -33,38 +32,57 @@ type RouteParams = {
 }
 
 const AnswerArea = () => {
-    const [questionState, setQuestionState] = useState<QuestionState>({
+    const navigate = useNavigate()
+    const [questionState, setQuestionState] = useState<QuestionPageState>({
         status: UIStatus.LOADING
     })
     const [answersState, setAnswersState] = useState<AnswersState>({
         status: UIStatus.IDLE,
         data: [],
-        page: 0
+        page: 0,
+        newAnswerDialogOpen: false
     })
-    const [answerDialogOpen, setAnswerDialogOpen] = useState<boolean>(false)
 
     const { id } = useParams<RouteParams>()
 
     const onAnswerSubmit = (answer: Answer) => {
-        // const curr = answers.slice()
-        // curr.splice(0, 0, answer)
-        // setAnswers(curr)
+        setAnswersState(prev => {
+            const next = {...prev}
+            next.data = [answer, ...prev.data]
+            next.newAnswerDialogOpen = false
+            return next
+        })
     }
 
-    const loadQuestion: (id: string) => void = (id: string) => {
-        try {
-            (async () => {
-                const questionResult = await questionRequest.getById(id)
-                setQuestionState(prev => {
-                    const next = {...prev}
-                    next.data = questionResult
-                    next.status = UIStatus.SUCCESS
-                    return next
-                })
-            })()
-        } catch (error) {
+    const loadQuestion: (
+        id: string,
+        signal?: AbortSignal
+    ) => void = (id: string, signal?: AbortSignal) => {
+        (async () => {
+            const questionPageState: QuestionPageState = {
+                status: UIStatus.SUCCESS
+            }
+            try {
+                const userResult = await userDetailRequest.getDetails(signal)
+                questionPageState.user = userResult
+            } catch (error) {
+                if (signal?.aborted) {
+                    return
+                }
+            }
 
-        }
+            try {
+                const questionResult = await questionRequest.getById(id, signal)
+                questionPageState.data = questionResult
+            } catch (error) {
+                if (signal?.aborted) {
+                    return
+                }
+            }
+            setQuestionState(_prev => {
+                return questionPageState
+            })
+        })()
     }
 
     const loadAnswers = () => {
@@ -101,8 +119,9 @@ const AnswerArea = () => {
     }
 
     useEffect(() => {
+        const controller = new AbortController()
         if (questionState.status === UIStatus.LOADING) {
-            loadQuestion(id ?? '0')
+            loadQuestion(id ?? '0', controller.signal)
         }
         if (questionState.status === UIStatus.SUCCESS) {
             setAnswersState(prev => {
@@ -110,6 +129,10 @@ const AnswerArea = () => {
                 next.status = UIStatus.LOADING
                 return next
             })
+        }
+
+        return () => {
+            controller.abort()
         }
     }, [questionState])
 
@@ -120,11 +143,15 @@ const AnswerArea = () => {
     }, [answersState])
 
     const openNewAnswerDialog = () => {
-        setAnswerDialogOpen(!answerDialogOpen)
+        setAnswersState(prev => {
+            const next = {...prev}
+            next.newAnswerDialogOpen = true
+            return next
+        })
     }
 
     const listItem = answersState.data.map(answer => (
-        <li><KepoAnswerCard answer={answer}/></li>
+        <li key={answer.id}><KepoAnswerCard answer={answer}/></li>
     ))
 
     return <Box
@@ -150,13 +177,34 @@ const AnswerArea = () => {
                 <Progress /> :
                 <>
                     <KepoQuestionCard question={questionState.data}/>
-                    <NewAnswerModal 
-                        open={answerDialogOpen} 
-                        setOpen={setAnswerDialogOpen} 
+                    <NewAnswerModal
+                        open={answersState.newAnswerDialogOpen}
+                        closeDialog={() => {
+                            setAnswersState(prev => {
+                                const next = {...prev}
+                                next.newAnswerDialogOpen = false
+                                return next
+                            })
+                        }}
                         onAnswerPosted={onAnswerSubmit}
                         question={questionState.data}
                     />
-                    <MainKepoCreateButton text="Write Answer" onClick={() => openNewAnswerDialog()} />
+                    {
+                        questionState.user ?
+                        <MainKepoCreateButton text="Write Answer" onClick={() => openNewAnswerDialog()} /> :
+                        <Button
+                            onClick={() => {
+                                navigate('/login')
+                            }}
+                            sx={{
+                                backgroundColor: '#eb6f00',
+                                color: '#f2f2f2',
+                                "&:hover": {
+                                    backgroundColor: '#aa5000'
+                                }
+                            }}
+                        >Login to post an answer</Button>
+                    }
                     <Sheet
                         sx={{
                             borderRadius: 'sm',

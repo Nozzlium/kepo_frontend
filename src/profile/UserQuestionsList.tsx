@@ -62,8 +62,8 @@ const UserQuestionsList = ({
     }
 
     useEffect(() => {
-        const CancelToken = axios.CancelToken;
-        const source = CancelToken.source();
+        const CancelToken = axios.CancelToken
+        const source = CancelToken.source()
         if (questionsState.status === UIStatus.LOADING) {
             loadQuestions(source.token)
         }

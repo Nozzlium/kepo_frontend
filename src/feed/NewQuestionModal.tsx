@@ -1,104 +1,156 @@
-import { Modal, ModalDialog, Sheet, FormControl, Textarea, Box, Button, Input, Select, Option } from "@mui/joy"
-import { Dispatch, SetStateAction, useState, useRef, useEffect } from "react"
+import { Modal, ModalDialog, Sheet, Textarea, Box, Button, Input, Select, Option } from "@mui/joy"
+import { useState, useEffect } from "react"
 import Category from "../data/Category"
-import CreateQuestionBody from "../request/CreateQuestionBody"
-import { create } from "domain"
-import Progress from "../common/Progress"
-import axios from "axios"
-import CategoriesResponse from "../response/CategoriesResponse"
-import QuestionResponse from "../response/QuestionResponse"
 import Question from "../data/Question"
-import { PostQuestionParam } from "../param/QuestionParam"
 import questionRequest from "../request/QuestionRequest"
+import { UIStatus } from "../lib/ui-status"
+import { KepoError, UnauthorizedError } from "../error/KepoError"
+import { useNavigate } from "react-router-dom"
+import KepoConfirmationDialog from "../common/KepoConfirmationDialog"
+
+interface NewQuestionState {
+    categoryId: number,
+    content: string,
+    description: string,
+    posted?: Question,
+    error?: KepoError,
+    shouldClose: boolean,
+    shouldConfirm: boolean,
+    status: UIStatus.IDLE | UIStatus.LOADING | UIStatus.ERROR | UIStatus.SUCCESS
+}
+
+interface CategoriesWrapper {
+    categories: Category[],
+    selected: number
+}
 
 const NewQuestionModal = ({
     open,
-    setOpen,
+    closeDialog,
+    categories,
     onQuestionPosted
 }: {
     open: boolean,
-    setOpen: Dispatch<SetStateAction<boolean>>,
+    closeDialog: () => void,
+    categories: CategoriesWrapper,
     onQuestionPosted: (question: Question) => void
 }) => {
-    const [isCategoryLoading, setIsCategoryLoading] = useState<boolean>(true)
-    const [isPostingLoading, setIsPostingLoading] = useState<boolean>(false)
-    const categories = useRef<Category[]>([])
-    const [postQuestionParam, setPostQuestionParam] = useState<PostQuestionParam>({
-        categoryId: 0,
+    const navigate = useNavigate()
+    const [newQuestionState, setPostQuestionParam] = useState<NewQuestionState>({
+        categoryId: categories.selected,
         content: "",
-        description: ""
+        description: "",
+        status: UIStatus.IDLE,
+        shouldClose: false,
+        shouldConfirm: false
     })
 
-    const closeDialog = () => {
-        setPostQuestionParam({
-            categoryId: 0,
-            content: "",
-            description: ""
-        })
-        setOpen(false)
-    }
-
     const isDataValid: boolean = 
-            postQuestionParam.categoryId != 0
-            && postQuestionParam.content.length !== 0
-            && postQuestionParam.description.length !== 0
-
-
-
-    const onContentInput = (
-        event: React.ChangeEvent<HTMLInputElement> | null,
-    ) => {
-        const curr = {...postQuestionParam}
-        curr.content = event ? event.target.value : ""
-        setPostQuestionParam(curr)
-    }
-
-    const onDescInput = (
-        event: React.ChangeEvent<HTMLTextAreaElement> | null,
-    ) => {
-        const curr = {...postQuestionParam}
-        curr.description = event ? event.target.value : ""
-        setPostQuestionParam(curr)
-    }
+            newQuestionState.categoryId != 0
+            && newQuestionState.content.length !== 0
+            && newQuestionState.description.length !== 0
 
     const onCategoryChange = (
         _ : React.SyntheticEvent | null,
         newValue: number | null,
     ) => {
-        const curr = {...postQuestionParam}
-        curr.categoryId = newValue ? newValue : 0
-        setPostQuestionParam(curr)
+        setPostQuestionParam(prev => {
+            console.log(newValue)
+            const next = {...prev}
+            next.categoryId = newValue ?? 0
+            return next
+        })
+    }
+
+    const isFormEmpty = newQuestionState.content.length === 0
+    && newQuestionState.description.length === 0
+
+    const onClose = () => {
+        if (!isFormEmpty) {
+            setPostQuestionParam(prev => {
+                const next = {...prev}
+                next.shouldConfirm = true
+                return next
+            })
+        } else {
+            setPostQuestionParam(_prev => {
+                return {
+                    categoryId: categories.selected,
+                    content: "",
+                    description: "",
+                    status: UIStatus.IDLE,
+                    shouldClose: true,
+                    shouldConfirm: false
+                }
+            })
+        }
     }
 
     const onSubmit = () => {
-        setIsPostingLoading(true);
-        (async () => {
-            const questionResponse = await questionRequest.postQuestion(postQuestionParam)
-            setIsPostingLoading(false)
-            onQuestionPosted(questionResponse)
-            closeDialog();
-        })()
+        setPostQuestionParam(prev => {
+            const next = {...prev}
+            next.status = UIStatus.LOADING
+            return next
+        })
     }
 
-    const loadCategories = () => {
+    const postQuestion = () => {
         (async () => {
-            const response = await axios.get<CategoriesResponse>('http://localhost:2637/api/category')
-            categories.current = response.data.data
-            setIsCategoryLoading(false)
+            try {
+                const questionResponse = await questionRequest.postQuestion(newQuestionState)
+                setPostQuestionParam(_prev => {
+                    return {
+                        posted: questionResponse,
+                        status: UIStatus.SUCCESS,
+                        content: "",
+                        description: "",
+                        categoryId: 0,
+                        shouldClose: true,
+                        shouldConfirm: false
+                    }
+                })
+            } catch (error) {
+                if (error instanceof UnauthorizedError) {
+                    navigate('/login')
+                }
+            }
         })()
     }
 
     useEffect(() => {
-        loadCategories()
-    }, [])
+        if (open) {
+            setPostQuestionParam({
+                categoryId: categories.selected,
+                content: "",
+                description: "",
+                status: UIStatus.IDLE,
+                shouldClose: false,
+                shouldConfirm: false
+            })
+        }
+    }, [open])
 
-    const categoryItems = categories.current.map(category => 
+    useEffect(() => {
+        if (newQuestionState.status === UIStatus.LOADING) {
+            postQuestion()
+        }
+
+        if (newQuestionState.status === UIStatus.SUCCESS && newQuestionState.posted) {
+            onQuestionPosted(newQuestionState.posted)
+        }
+
+        if (newQuestionState.shouldClose) {
+            closeDialog()
+        }
+    }, [newQuestionState])
+
+    const categoryItems = categories.categories.map(category => 
         <Option key={category.id} value={category.id}>{category.name}</Option>
     )
 
     return <Modal 
         open={open} 
-        onClose={() => closeDialog()}
+        onClose={() => onClose()}
         sx={{
             display: 'flex',
             justifyContent: 'center',
@@ -122,37 +174,71 @@ const NewQuestionModal = ({
             })}
             size="lg"
         >
+        <KepoConfirmationDialog
+                open={newQuestionState.shouldConfirm}
+                title="Discard Answer?"
+                negativeMessage="Discard"
+                negativeAction={() => {
+                    setPostQuestionParam(_prev => {
+                        return {
+                            categoryId: categories.selected,
+                            content: "",
+                            description: "",
+                            status: UIStatus.IDLE,
+                            shouldClose: true,
+                            shouldConfirm: false
+                        }
+                    })
+                }}
+                positiveMessage="Cancel"
+                positiveAction={() => {
+                    setPostQuestionParam(prev => {
+                        const next = {...prev}
+                        next.shouldConfirm = false
+                        return next
+                    })
+                }}
+            />
         <Sheet
             sx={{
                 display: 'flex',
                 flexDirection: 'column',
             }}
         >
-            {
-                isCategoryLoading ?
-                    <Progress/> :
-                    <Select 
-                        variant="soft"
-                        placeholder="Category"
-                        onChange={onCategoryChange}
-                    >{categoryItems}</Select>
-            }
+            <Select
+                defaultValue={categories.selected}
+                variant="soft"
+                placeholder="Category"
+                onChange={onCategoryChange}
+            >{categoryItems}</Select>
             <Input
                 sx={{
                     my: 1
                 }}
                 placeholder="Your question here..."
                 required={true}
-                onChange={onContentInput}
-                disabled={isPostingLoading || isCategoryLoading}
+                onChange={(event) => {
+                    setPostQuestionParam(prev => {
+                        const next = {...prev}
+                        next.content = event.target.value
+                        return next
+                    })
+                }}
+                disabled={newQuestionState.status === UIStatus.LOADING}
             />
             <Textarea
                 placeholder="Need to add details? Put them here..."
                 minRows={5}
                 required={true}
-                onChange={onDescInput}
+                onChange={(event) => {
+                    setPostQuestionParam(prev => {
+                        const next = {...prev}
+                        next.description = event.target.value
+                        return next
+                    })
+                }}
                 maxRows={5}
-                disabled={isPostingLoading || isCategoryLoading}
+                disabled={newQuestionState.status === UIStatus.LOADING}
                 endDecorator={
                     <Box
                         sx={{
@@ -167,7 +253,7 @@ const NewQuestionModal = ({
                             sx={{ml: 'auto'}} 
                             onClick={() => onSubmit()} 
                             disabled={!isDataValid} 
-                            loading={isPostingLoading}
+                            loading={newQuestionState.status === UIStatus.LOADING}
                         >
                             Submit
                         </Button>     

@@ -1,19 +1,22 @@
-import { Box, Button, CircularProgress, ListItem, Select, Sheet, Option, List } from "@mui/joy"
-import { useEffect, useRef, useState } from "react"
+import { Box, Button, ListItem, Select, Option, List } from "@mui/joy"
+import { useEffect, useState } from "react"
 import NewQuestionModal from "./NewQuestionModal"
 import Progress from "../common/Progress"
 import Category from "../data/Category"
 import axios, { CancelToken } from "axios"
-import CategoriesResponse from "../response/CategoriesResponse"
 import Question from "../data/Question"
 import { useNavigate } from "react-router-dom"
 import MainKepoCreateButton from "../common/MainKepoCreateButton"
 import { UIStatus } from "../lib/ui-status"
 import KepoQuestionCard from "../common/KepoQuestionCard"
 import questionRequest from "../request/QuestionRequest"
+import categoriesRequest from "../request/CategoriesRequest"
+import User from "../data/User"
+import userDetailRequest from "../request/UserDetailsRequest"
 
-interface CategoriesState {
+interface FeedPageState {
     status: UIStatus.IDLE | UIStatus.SUCCESS | UIStatus.LOADING | UIStatus.ERROR,
+    user?: User,
     data: Category[],
 }
 
@@ -21,12 +24,13 @@ interface QuestionsState {
     status: UIStatus.IDLE | UIStatus.LOADING | UIStatus.SUCCESS | UIStatus.ERROR,
     data: Question[],
     page: number,
-    selectedCategory: number
+    selectedCategory: number,
+    newQuestionDialogOpen: boolean
 }
 
 const FeedArea = () => {
     const navigate = useNavigate()
-    const [categoriesState, setCategoriesState] = useState<CategoriesState>({
+    const [feedPageState, setFeedPageState] = useState<FeedPageState>({
         status: UIStatus.LOADING,
         data: [],
     })
@@ -34,28 +38,59 @@ const FeedArea = () => {
         status: UIStatus.IDLE,
         data: [],
         selectedCategory: 0,
-        page: 0
+        page: 0,
+        newQuestionDialogOpen: false
     })
-    const [newQuestionModalOpen, setNewQuestoionModalOpen] = useState<boolean>(false)
 
-
-    const openNewQuestionDialog = () => {
-        setNewQuestoionModalOpen(true)
+    const onQuestionPosted = (question: Question) => {
+        navigate(`/question/${question.id}`)
     }
 
-    const loadCategories = () => {
-        (
-            (async () => {
-                const response = await axios.get<CategoriesResponse>('http://localhost:2637/api/category')
-                console.log("selesai get category")
-                setCategoriesState(prev => {
-                    const next = {...prev}
-                    next.status = UIStatus.SUCCESS
-                    next.data = response.data.data
-                    return next
-                })
-            })()
-        )
+    const openNewQuestionDialog = () => {
+        setQuestionsState(prev => {
+            const next = {...prev}
+            next.newQuestionDialogOpen = true
+            return next
+        })
+    }
+
+    const closeNewQuestionDialog = () => {
+        setQuestionsState(prev => {
+            const next = {...prev}
+            next.newQuestionDialogOpen = false
+            return next
+        })
+    }
+
+    const loadInitData = (
+        signal?: AbortSignal
+    ) => {
+        (async () => {
+            const tempFeedPageState: FeedPageState = {
+                status: UIStatus.SUCCESS,
+                data: [],
+            }
+            try {
+                const tempUser = await userDetailRequest.getDetails(signal)
+                tempFeedPageState.user = tempUser
+            } catch (error) {
+                if (signal?.aborted) {
+                    return
+                }
+            }
+
+            try {
+                const categories = await categoriesRequest.getCategories(signal)
+                tempFeedPageState.data = categories
+            } catch (error) {
+                if (signal?.aborted) {
+                    return
+                }
+            }
+            setFeedPageState(_prev => {
+                return tempFeedPageState
+            })
+        })()
     }
 
     const loadQuestions = (
@@ -83,24 +118,24 @@ const FeedArea = () => {
         }
     }
 
-    const onQuestionPosted = (question: Question) => {
-        navigate(`/question/${question.id}`)
-    }
-
     useEffect(() => {
-        if (categoriesState.status === UIStatus.LOADING) {
-            console.log("masuk useeffect atas")
-            loadCategories()
+        const controller = new AbortController()
+        const signal = controller.signal
+        if (feedPageState.status === UIStatus.LOADING) {
+            loadInitData(signal)
         }
-        if (categoriesState.status === UIStatus.SUCCESS) {
-            console.log("masuk useeffect bawah")
+        if (feedPageState.status === UIStatus.SUCCESS) {
             setQuestionsState(prev => {
                 const next = {...prev}
                 next.status = UIStatus.LOADING
                 return next
             })
         }
-    }, [categoriesState])
+
+        return () => {
+            controller.abort()
+        }
+    }, [feedPageState])
 
     useEffect(() => {
         if (questionsState.status === UIStatus.LOADING) {
@@ -117,7 +152,8 @@ const FeedArea = () => {
                 page: 0,
                 selectedCategory: newValue ?? 0,
                 data: [],
-                status: UIStatus.LOADING
+                status: UIStatus.LOADING,
+                newQuestionDialogOpen: false
             }
         })
     };
@@ -134,7 +170,7 @@ const FeedArea = () => {
         <ListItem key={question.id}><KepoQuestionCard question={question} /></ListItem>
     ) 
 
-    const categoryItems = categoriesState.data.map(category => 
+    const categoryItems = feedPageState.data.map(category => 
         <Option key={category.id} value={category.id}>{category.name}</Option>
     )
 
@@ -154,16 +190,35 @@ const FeedArea = () => {
             }
         })}
         >
-            <MainKepoCreateButton text="Ask a Question!" onClick={() => openNewQuestionDialog()}/>
             <NewQuestionModal 
-                open={newQuestionModalOpen} 
-                setOpen={setNewQuestoionModalOpen}
+                open={questionsState.newQuestionDialogOpen}
+                closeDialog={() => closeNewQuestionDialog()}
                 onQuestionPosted={onQuestionPosted}
+                categories={{
+                    categories: feedPageState.data,
+                    selected: questionsState.selectedCategory
+                }}
             />
             {
-                categoriesState.status === UIStatus.LOADING ? 
+                feedPageState.status === UIStatus.LOADING ? 
                 <Progress/> : 
                 <>
+                    {
+                        feedPageState.user ?
+                        <MainKepoCreateButton text="Ask a Question!" onClick={() => openNewQuestionDialog()}/>
+                        : <Button
+                            onClick={() => {
+                                navigate('/login')
+                            }}
+                            sx={{
+                                backgroundColor: '#eb6f00',
+                                color: '#f2f2f2',
+                                "&:hover": {
+                                    backgroundColor: '#aa5000'
+                                }
+                            }}
+                        >Login to post a question</Button>
+                    }
                     <Select 
                         defaultValue={1}
                         variant="soft"

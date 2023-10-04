@@ -1,7 +1,7 @@
 import { Box, Button, List, ListItem, Sheet } from "@mui/joy"
 import { useEffect, useState } from "react"
 import Answer from "../data/Answer"
-import KepoAnswerCard from "../question/KepoAnswercard"
+import KepoAnswerCard from "../common/KepoAnswercard"
 import User from "../data/User"
 import answerRequest from "../request/AnswerRequest"
 import { UIStatus } from "../lib/ui-status"

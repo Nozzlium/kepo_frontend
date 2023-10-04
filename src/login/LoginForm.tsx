@@ -35,6 +35,9 @@ const CredentialAlert = (
         return <Alert 
             variant="soft"
             color="danger"
+            sx={{
+                mt: 1
+            }}
             endDecorator={
                 <IconButton variant="solid" size="sm" color="danger" onClick={() => {
                     setLoginState(prev => {

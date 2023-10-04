@@ -82,7 +82,7 @@ const KepoNavbar = forwardRef((
                     </Menu>
                 </Dropdown>
             } else {
-                return <ListItemButton role="menuitem" onClick={() => goToHomeFeed()}>
+                return <ListItemButton role="menuitem" onClick={() => goToLogin()}>
                     Sign in
                 </ListItemButton>
             }
