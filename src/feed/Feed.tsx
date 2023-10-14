@@ -14,7 +14,7 @@ const Feed = () => {
     return <Box
         className="page"
     >   
-        <KepoNavbar ref={navbarRef}/>
+        <KepoNavbar/>
         <Box
             sx={(theme) => ({
                 [theme.breakpoints.down('md')]: {

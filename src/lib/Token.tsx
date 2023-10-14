@@ -10,6 +10,11 @@ export class Token {
         }
     }
 
+    discardToken: () => void = () => {
+        delete networkCall.defaults.headers.common['Authorization']
+        localStorage.removeItem('token')
+    }
+
     saveToken: (token: string) => void = (token) => {
         localStorage.setItem('token', token)
     }

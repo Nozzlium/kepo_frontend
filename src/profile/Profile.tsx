@@ -45,7 +45,7 @@ const Profile = () => {
             flexDirection: 'column',
         }}
     >
-        <KepoNavbar ref={navbarRef}/>
+        <KepoNavbar/>
         <Box
             sx={(theme) => ({
                 [theme.breakpoints.down('md')]: {

@@ -1,28 +1,73 @@
 import { Box, Divider, List, ListItem, ListItemButton, Dropdown, MenuButton, Menu, MenuItem, ListItemDecorator, Sheet } from "@mui/joy"
-import { NavigateOptions, NavigateProps, useNavigate } from "react-router-dom"
+import { NavigateOptions, NavigateProps, useLocation, useNavigate } from "react-router-dom"
 import icon from "../asset/icon.png"
 import { AccountBox, Logout } from "@mui/icons-material"
 import { Ref, forwardRef, useEffect, useRef, useState } from "react"
 import User from "../data/User"
 import userDetailRequest, { UserDetailsRequest } from "../request/UserDetailsRequest"
-import { UnauthorizedError } from "../error/KepoError"
 import Progress from "./Progress"
+import { UIStatus } from "../lib/ui-status"
+import token from "../lib/Token"
+import { UnauthorizedError } from "../error/KepoError"
 
-interface Prop {}
+interface NavbarState {
+    user?: User,
+    status: UIStatus.LOADING | UIStatus.SUCCESS | UIStatus.ERROR | UIStatus.IDLE
+}
 
-const KepoNavbar = forwardRef((
-    prop: Prop,
-    ref: Ref<HTMLDivElement | undefined>
+const ProfileMenuButton = (
+    {
+        navbarState,
+        onUserOptionSelect,
+        goToLogin
+    }:{
+        navbarState: NavbarState,
+        onUserOptionSelect: (item: number) => void,
+        goToLogin: () => void
+    }
 ) => {
-    const navigate = useNavigate()
-    const [isUserLoading, setIsUserLoading] = useState<boolean>(false)
-    const [user, setUser] = useState<{hasUser: boolean, user: User | null}>({ hasUser: false, user: null})
-
-    const goToProfile = (id: string) => {
-        const props: NavigateOptions = {
-            replace: false
+    if (navbarState.status === UIStatus.LOADING) {
+        return <Progress/>
+    } else {
+        if (navbarState.user) {
+            return <Dropdown>
+                <MenuButton
+                    variant="plain"
+                >
+                    Hello, {navbarState.user.username}
+                </MenuButton>
+                <Menu
+                    variant="plain">
+                        <MenuItem onClick={() => onUserOptionSelect(1)}>
+                            <ListItemDecorator>
+                                <AccountBox/>
+                            </ListItemDecorator>
+                            Profile
+                        </MenuItem>
+                        <MenuItem onClick={() => onUserOptionSelect(2)}>
+                            <ListItemDecorator>
+                                <Logout/>
+                            </ListItemDecorator>
+                            Logout
+                        </MenuItem>
+                </Menu>
+            </Dropdown>
+        } else {
+            return <ListItemButton role="menuitem" onClick={() => goToLogin()}>
+                Sign in
+            </ListItemButton>
         }
-        navigate("/profile/"+id, props)
+    }
+}
+
+const KepoNavbar = () => {
+    const navigate = useNavigate()
+    const [navbarState, setNavbarState] = useState<NavbarState>({
+        status: UIStatus.LOADING
+    })
+
+    const goToProfile = () => {
+        navigate(`/profile/${navbarState.user?.id}`)
     }
 
     const goToHomeFeed = () => {
@@ -44,78 +89,47 @@ const KepoNavbar = forwardRef((
     ) => {
         switch(value) {
             case 1 : {
-                goToProfile("1")
+                goToProfile()
                 return
             }
             case 2 : {
-                goToHomeFeed()
+                token.discardToken()
+                window.location.reload()
                 return
             }
         }
     }
 
-    const ProfileMenuButton = () => {
-        if (isUserLoading) {
-            return <Progress/>
-        } else {
-            if (user.hasUser) {
-                return <Dropdown>
-                    <MenuButton
-                        variant="plain"
-                    >
-                        Hello, {user.user?.username}
-                    </MenuButton>
-                    <Menu
-                        variant="plain">
-                            <MenuItem onClick={() => onUserOptionSelect(1)}>
-                                <ListItemDecorator>
-                                    <AccountBox/>
-                                </ListItemDecorator>
-                                Profile
-                            </MenuItem>
-                            <MenuItem onClick={() => onUserOptionSelect(2)}>
-                                <ListItemDecorator>
-                                    <Logout/>
-                                </ListItemDecorator>
-                                Logout
-                            </MenuItem>
-                    </Menu>
-                </Dropdown>
-            } else {
-                return <ListItemButton role="menuitem" onClick={() => goToLogin()}>
-                    Sign in
-                </ListItemButton>
-            }
-        }
-    }
-
-    const loadUser = () => {
-        if (isUserLoading) {
-            return
-        }
-        setIsUserLoading(true);
+    const loadUser = (
+        signal?: AbortSignal
+    ) => {
         (async () => {
             try {
-                const user = await userDetailRequest.getDetails()
-                setUser({
-                    hasUser: true,
-                    user: user
+                const user = await userDetailRequest.getDetails(signal)
+                setNavbarState({
+                    user: user,
+                    status: UIStatus.SUCCESS
                 })
             } catch (error) {
                 if (error instanceof UnauthorizedError) {
-                    setUser({
-                        hasUser: false,
-                        user: null
+                    setNavbarState({
+                        status: UIStatus.IDLE
                     })
                 }
             }
-            setIsUserLoading(false)
         })()
     }
 
     useEffect(() => {
-        loadUser()
-    }, [])
+        const controller = new AbortController()
+        if (navbarState.status === UIStatus.LOADING) {
+            loadUser(controller.signal)
+        }
+
+        return () => {
+            controller.abort()
+        }
+    }, [navbarState])
 
     return <Sheet
         component="nav"
@@ -142,11 +156,15 @@ const KepoNavbar = forwardRef((
                 </ListItemButton>
             </ListItem>
             <ListItem role="none" sx={{ marginInlineStart: 'auto' }}>
-                <ProfileMenuButton/>
+                <ProfileMenuButton
+                    navbarState={navbarState}
+                    onUserOptionSelect={onUserOptionSelect}
+                    goToLogin={goToLogin}
+                />
             </ListItem>
         </List>
         <Divider/>
     </Sheet>
-})
+}
 
 export default KepoNavbar

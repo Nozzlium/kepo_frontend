@@ -63,10 +63,11 @@ const KepoAnswerCard = ({answer}: {answer: Answer}) => {
                 }}
             >
                 <Typography
-                    startDecorator={<b><Link href={"/profile/" + answerDisplay.user.id} color="neutral">{answerDisplay.user.username}</Link></b>}
                     level="body-xs"
                 >
-                    {"answered:"}
+                    Answered by {
+                        <b><Link href={"/profile/" + answerDisplay.user.id} color="neutral">{answerDisplay.user.username}</Link></b>
+                    }, {answerDisplay.createdAt}
                 </Typography>
                 <Typography level="body-sm">{answerDisplay.content}</Typography>
             </Sheet>

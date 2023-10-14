@@ -5,6 +5,7 @@ import QuestionsResponse from "../response/QuestionsResponse";
 import networkCall from "./NetworkCall";
 import QuestionResponse from "../response/QuestionResponse";
 import { UnauthorizedError } from "../error/KepoError";
+import { UNAUTHORIZED } from "../constants/error-code";
 
 class QuestionRequest {
     getFeed: (param: QuestionParam) => Promise<[questions:Question[], page: number]> = async (param: QuestionParam) => {
@@ -47,7 +48,18 @@ class QuestionRequest {
         const url = `http://localhost:2637/api/question`
         const response = await networkCall.post<QuestionResponse>(url, param)
 
-        if (response.data.code == 401) {
+        if (response.data.code === 401) {
+            throw new UnauthorizedError(response.data.status)
+        }
+
+        return response.data.data
+    }
+
+    delete: (id: number) => Promise<Question> = async (id: number) => {
+        const url = `http://localhost:2637/api/question/${id}`
+        const response = await networkCall.delete<QuestionResponse>(url)
+
+        if (response.data.code === UNAUTHORIZED) {
             throw new UnauthorizedError(response.data.status)
         }
 

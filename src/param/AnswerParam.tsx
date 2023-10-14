@@ -1,6 +1,8 @@
 export interface AnswerParam {
-    pageNo: number,
-    pageSize: number
+    pageNo?: number,
+    pageSize?: number,
+    sortBy?: string,
+    order?: string
 }
 
 export interface PostAnswerParam {
