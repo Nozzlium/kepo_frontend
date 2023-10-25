@@ -1,30 +1,101 @@
 import { Box, Button, Dropdown, Link, ListItemDecorator, Menu, MenuButton, MenuItem, Sheet, Typography } from "@mui/joy"
 import Question from "../data/Question"
-import { Delete, MoreHoriz, ThumbUp, ThumbUpOffAltOutlined } from "@mui/icons-material"
+import { Delete, Edit, MoreHoriz, ThumbUp, ThumbUpOffAltOutlined } from "@mui/icons-material"
 import { useEffect, useState } from "react"
 import likeRequest from "../request/LikeRequest"
 import { QuestionLikeParam } from "../param/LikeParam"
 import { UIStatus } from "../lib/ui-status"
 import questionRequest from "../request/QuestionRequest"
+import User from "../data/User"
+import { useNavigate } from "react-router-dom"
+import NewQuestionModal from "../feed/NewQuestionModal"
 
 interface QuestionCardState {
     question?: Question,
     likeButton: UIStatus.IDLE | UIStatus.ERROR | UIStatus.SUCCESS | UIStatus.LOADING,
-    deleteButton: UIStatus.IDLE | UIStatus.ERROR | UIStatus.SUCCESS | UIStatus.LOADING
+    deleteButton: UIStatus.IDLE | UIStatus.ERROR | UIStatus.SUCCESS | UIStatus.LOADING,
+    isEditDialogOpen: boolean
+}
+
+const QuestionOptions = (
+    {
+        user,
+        question,
+        loading,
+        disabled,
+        canEdit,
+        onDeleteClick,
+        onEditClicked
+    }: {
+        user?: User,
+        question: Question,
+        loading: boolean,
+        disabled: boolean,
+        canEdit: boolean,
+        onDeleteClick: () => void,
+        onEditClicked: () => void
+}) => {
+    if (user) {
+        if (user.id === question.user.id) {
+
+            const options: JSX.Element[] = [
+                <MenuItem onClick={onDeleteClick}>
+                    <ListItemDecorator>
+                        <Delete/>
+                    </ListItemDecorator>
+                    Delete
+                </MenuItem>
+            ]
+
+            if (canEdit) {
+                options.push(
+                    <MenuItem onClick={onEditClicked}>
+                        <ListItemDecorator>
+                            <Edit/>
+                        </ListItemDecorator>
+                        Edit
+                    </MenuItem>
+                )
+            }
+
+            return <Dropdown>
+                <MenuButton
+                    variant="plain"
+                    loading={loading}
+                    disabled={disabled}
+                >
+                    <MoreHoriz/>
+                </MenuButton>
+                <Menu
+                    variant="plain"
+                >
+                    {options}
+                </Menu>
+            </Dropdown>
+        }
+    }
+
+    return null
 }
 
 const KepoQuestionCard = (
     {
-        question
+        user,
+        question,
+        canEdit
     }: 
     {
-        question: Question
+        user?: User,
+        question: Question,
+        canEdit?: boolean
     }
 ) => {
+    const navigate = useNavigate()
     const [questionCardState, setQuestionCardState] = useState<QuestionCardState>({
         question: question,
         likeButton: UIStatus.IDLE,
-        deleteButton: UIStatus.IDLE
+        deleteButton: UIStatus.IDLE,
+        isEditDialogOpen: false
     })
 
     function likeQuestion() {
@@ -62,10 +133,11 @@ const KepoQuestionCard = (
                 const result = await questionRequest.delete(questionCardState.question.id)
 
                 if (result) {
-                    setQuestionCardState(_prev => {
+                    setQuestionCardState(prev => {
                         return {
-                            likeButton: UIStatus.IDLE,
-                            deleteButton: UIStatus.SUCCESS
+                            likeButton: prev.likeButton,
+                            deleteButton: UIStatus.SUCCESS,
+                            isEditDialogOpen: prev.isEditDialogOpen
                         }
                     })
                 }
@@ -91,10 +163,30 @@ const KepoQuestionCard = (
         })
     }
 
-    const dummyDeleteClick = () => {
-        setQuestionCardState({
-            deleteButton: UIStatus.SUCCESS,
-            likeButton: UIStatus.IDLE
+    const onEditClicked = () => {
+        if (!canEdit) {
+            return
+        }
+        setQuestionCardState(prev => {
+            const next = {...prev}
+            next.isEditDialogOpen = true
+            return next
+        })
+    }
+
+    const closeNewQuestionDialog = () => {
+        setQuestionCardState(prev => {
+            const next = {...prev}
+            next.isEditDialogOpen = false
+            return next
+        })
+    }
+
+    const onQuestionPosted = (question: Question) => {
+        setQuestionCardState(prev => {
+            const next = {...prev}
+            next.question = question
+            return next
         })
     }
 
@@ -142,6 +234,19 @@ const KepoQuestionCard = (
             borderRadius: 'md'
         }}
     >
+        {
+            canEdit ?
+            <NewQuestionModal 
+                open={questionCardState.isEditDialogOpen}
+                closeDialog={() => closeNewQuestionDialog()}
+                onQuestionPosted={onQuestionPosted}
+                forEdit={questionCardState.question}
+                categories={{
+                    categories: [questionCardState.question.category],
+                    selected: questionCardState.question.category.id
+                }}
+            /> : null
+        }
         <Box
             sx={{
                 display: 'flex',
@@ -179,7 +284,11 @@ const KepoQuestionCard = (
                                 href={"/profile/" + questionCardState.question.user.id} 
                                 color="neutral"
                             >{questionCardState.question.user.username}</Link></b>
-                    }, {questionCardState.question.createdAt}
+                    }, {questionCardState.question.createdAt} {
+                        questionCardState.question.isEdited ?
+                        <Typography level="body-xs"><i>Edited</i></Typography> :
+                        null
+                    }
             </Typography>
             <Link level="body-lg" color="neutral" sx={{my: 1}} href={"/question/" + questionCardState.question.id}><b>{questionCardState.question.content}</b></Link>
             <Typography level="body-sm">{questionCardState.question.description}</Typography>
@@ -191,25 +300,15 @@ const KepoQuestionCard = (
                 }}
             >
                 <Typography level="body-xs" sx={{my: 1}}><b>{questionCardState.question.answers} Answer(s)</b></Typography>
-                <Dropdown>
-                    <MenuButton
-                        variant="plain"
-                        loading={questionCardState.deleteButton === UIStatus.LOADING}
-                        disabled={interactionsInactive}
-                    >
-                        <MoreHoriz/>
-                    </MenuButton>
-                    <Menu
-                        variant="plain"
-                    >
-                        <MenuItem onClick={() => onDeleteClicked()}>
-                            <ListItemDecorator>
-                                <Delete/>
-                            </ListItemDecorator>
-                            Delete
-                        </MenuItem>
-                    </Menu>
-                </Dropdown>
+                <QuestionOptions
+                    question={questionCardState.question}
+                    user={user}
+                    loading={questionCardState.deleteButton === UIStatus.LOADING}
+                    disabled={interactionsInactive}
+                    canEdit={canEdit ?? false}
+                    onDeleteClick={onDeleteClicked}
+                    onEditClicked={onEditClicked}
+                />
             </div>
         </Box>
     </Sheet>

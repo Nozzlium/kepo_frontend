@@ -203,7 +203,11 @@ const AnswerArea = () => {
             questionState.status === UIStatus.LOADING || !questionState.data ?
                 <Progress /> :
                 <>
-                    <KepoQuestionCard question={questionState.data}/>
+                    <KepoQuestionCard 
+                        question={questionState.data}
+                        user={questionState.user}
+                        canEdit={true}
+                    />
                     <NewAnswerModal
                         open={answersState.newAnswerDialogOpen}
                         closeDialog={() => {

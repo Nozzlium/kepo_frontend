@@ -55,6 +55,17 @@ class QuestionRequest {
         return response.data.data
     }
 
+    edit: (id: number, param: PostQuestionParam) => Promise<Question> = async (id: number, param: PostQuestionParam) => {
+        const url = `http://localhost:2637/api/question/${id}`
+        const response = await networkCall.put<QuestionResponse>(url, param)
+
+        if (response.data.code === 401) {
+            throw new UnauthorizedError(response.data.status)
+        }
+
+        return response.data.data
+    }
+
     delete: (id: number) => Promise<Question> = async (id: number) => {
         const url = `http://localhost:2637/api/question/${id}`
         const response = await networkCall.delete<QuestionResponse>(url)

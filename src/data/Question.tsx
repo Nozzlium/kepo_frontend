@@ -10,7 +10,8 @@ interface Question {
     isLiked: boolean,
     user: User,
     category: Category,
-    createdAt: string
+    createdAt: string,
+    isEdited: boolean
 }
 
 export default Question

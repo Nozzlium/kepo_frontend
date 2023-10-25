@@ -167,7 +167,7 @@ const FeedArea = () => {
     }
 
     const listItem = questionsState.data.map(question => 
-        <ListItem key={question.id}><KepoQuestionCard question={question} /></ListItem>
+        <ListItem key={question.id}><KepoQuestionCard question={question} user={feedPageState.user}/></ListItem>
     ) 
 
     const categoryItems = feedPageState.data.map(category => 

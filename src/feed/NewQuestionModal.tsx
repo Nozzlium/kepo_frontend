@@ -28,12 +28,14 @@ const NewQuestionModal = ({
     open,
     closeDialog,
     categories,
-    onQuestionPosted
+    onQuestionPosted,
+    forEdit
 }: {
     open: boolean,
     closeDialog: () => void,
     categories: CategoriesWrapper,
-    onQuestionPosted: (question: Question) => void
+    onQuestionPosted: (question: Question) => void,
+    forEdit?: Question
 }) => {
     const navigate = useNavigate()
     const [newQuestionState, setPostQuestionParam] = useState<NewQuestionState>({
@@ -117,12 +119,35 @@ const NewQuestionModal = ({
         })()
     }
 
+    const editQuestion = (id: number) => {
+        (async () => {
+            try {
+                const questionResponse = await questionRequest.edit(id, newQuestionState)
+                setPostQuestionParam(_prev => {
+                    return {
+                        posted: questionResponse,
+                        status: UIStatus.SUCCESS,
+                        content: "",
+                        description: "",
+                        categoryId: 0,
+                        shouldClose: true,
+                        shouldConfirm: false
+                    }
+                })
+            } catch (error) {
+                if (error instanceof UnauthorizedError) {
+                    navigate('/login')
+                }
+            }
+        })()
+    }
+
     useEffect(() => {
         if (open) {
             setPostQuestionParam({
                 categoryId: categories.selected,
-                content: "",
-                description: "",
+                content: forEdit?.content ?? "",
+                description: forEdit?.description ?? "",
                 status: UIStatus.IDLE,
                 shouldClose: false,
                 shouldConfirm: false
@@ -131,8 +156,17 @@ const NewQuestionModal = ({
     }, [open])
 
     useEffect(() => {
+        console.log("rendered")
+        console.log(newQuestionState)
+    }, [newQuestionState])
+
+    useEffect(() => {
         if (newQuestionState.status === UIStatus.LOADING) {
-            postQuestion()
+            if (!forEdit) {
+                postQuestion()
+            } else {
+                editQuestion(forEdit.id)
+            }
         }
 
         if (newQuestionState.status === UIStatus.SUCCESS && newQuestionState.posted) {
@@ -217,6 +251,7 @@ const NewQuestionModal = ({
                 }}
                 placeholder="Your question here..."
                 required={true}
+                value={newQuestionState.content}
                 onChange={(event) => {
                     setPostQuestionParam(prev => {
                         const next = {...prev}
@@ -237,6 +272,7 @@ const NewQuestionModal = ({
                         return next
                     })
                 }}
+                value={newQuestionState.description}
                 maxRows={5}
                 disabled={newQuestionState.status === UIStatus.LOADING}
                 endDecorator={
