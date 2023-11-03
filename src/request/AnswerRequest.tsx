@@ -35,6 +35,29 @@ export class AnswerRequest {
 
         return response.data.data
     }
+
+    delete: (id: number) => Promise<Answer> = async (id: number) => {
+        const url = `http://localhost:2637/api/answer/${id}`
+        const response = await networkCall.delete<AnswerResponse>(url)
+        const code = response.data.code
+
+        if (code === 401) {
+            throw new UnauthorizedError(response.data.status)
+        }
+
+        return response.data.data
+    }
+
+    update: (id: number, param: PostAnswerParam) => Promise<Answer> = async (id: number, param: PostAnswerParam) => {
+        const url = `http://localhost:2637/api/answer/${id}`
+        const response = await networkCall.put<AnswerResponse>(url, param)
+
+        if (response.data.code === 401) {
+            throw new UnauthorizedError(response.data.status)
+        }
+
+        return response.data.data
+    }
 }
 
 const answerRequest = new AnswerRequest()

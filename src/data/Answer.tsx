@@ -6,7 +6,8 @@ interface Answer {
     likes: number,
     isLiked: boolean,
     user: User,
-    createdAt: string
+    createdAt: string,
+    questionId: number
 }
 
 export default Answer

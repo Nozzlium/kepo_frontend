@@ -26,15 +26,17 @@ const NewAnswerModal = ({
     closeDialog,
     question,
     onAnswerPosted,
+    forEdit
 }: {
     open: boolean,
     closeDialog: () => void,
-    question: Question,
-    onAnswerPosted: (answer: Answer) => void
+    question?: Question,
+    onAnswerPosted: (answer: Answer) => void,
+    forEdit?: Answer
 }) => {
     const navigate = useNavigate()
     const [newAnswerState, setNewAnswerState] = useState<NewAnswerState>({
-        answer: "",
+        answer: forEdit?.content ?? "",
         shouldClose: false,
         shouldConfirm: false,
         status: UIStatus.IDLE
@@ -62,6 +64,9 @@ const NewAnswerModal = ({
     }
 
     const postAnswer = () => {
+        if (!question) {
+            return
+        }
         (async () => {
             try {
                 const answerResult = await answerRequest.postNewAnswer({
@@ -93,11 +98,46 @@ const NewAnswerModal = ({
         })()
     }
 
+    const updateAnswer = () => {
+        if (!forEdit) {
+            return
+        }
+        (async () => {
+            try {
+                const answerResult = await answerRequest.update(forEdit.id, {
+                    questionId: forEdit.questionId,
+                    content: newAnswerState.answer
+                })
+                setNewAnswerState(_prev => {
+                    return {
+                        posted: answerResult,
+                        status: UIStatus.SUCCESS,
+                        answer: "",
+                        shouldClose: true,
+                        shouldConfirm: false
+                    }
+                })
+            } catch (error) {
+                if (error instanceof UnauthorizedError) {
+                    navigate("/login")
+                    return
+                }
+
+                setNewAnswerState(prev => {
+                    const next = {...prev}
+                    next.status = UIStatus.ERROR
+                    next.error = new KepoError("UnknownError", "Unknown error")
+                    return next
+                })
+            }
+        })()
+    }
+
     useEffect(() => {
         if (open) {
             setNewAnswerState(_prev => {
                 return {
-                    answer: "",
+                    answer: forEdit?.content ?? "",
                     status: UIStatus.IDLE,
                     shouldClose: false,
                     shouldConfirm: false
@@ -108,7 +148,11 @@ const NewAnswerModal = ({
 
     useEffect(() => {
         if (newAnswerState.status === UIStatus.LOADING) {
-            postAnswer()
+            if (forEdit) {
+                updateAnswer()
+            } else {
+                postAnswer()
+            }
             return
         } 
 

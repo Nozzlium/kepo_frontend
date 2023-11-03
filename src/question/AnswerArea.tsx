@@ -177,9 +177,17 @@ const AnswerArea = () => {
         })
     }
 
-    const listItem = answersState.data.map(answer => (
-        <li key={answer.id}><KepoAnswerCard answer={answer}/></li>
-    ))
+    const getListItems = (user?: User) => {
+        return answersState.data.map(answer => (
+            <li key={answer.id}>
+                <KepoAnswerCard 
+                    user={user} 
+                    answer={answer}
+                    canEdit={true}
+                />
+            </li>
+        ))
+    }
 
     return <Box
         sx={(theme) => ({
@@ -264,9 +272,9 @@ const AnswerArea = () => {
                         }}
                     >
                         <ul style={{
-                            listStyleType: 'none',
-                            padding: 0
-                        }}>{listItem}</ul>
+                                listStyleType: 'none',
+                                padding: 0
+                            }}>{getListItems(questionState.user)}</ul>
                     </Sheet>
                     <Button 
                         variant="plain" 

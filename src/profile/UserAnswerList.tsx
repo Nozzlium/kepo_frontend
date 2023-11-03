@@ -29,7 +29,7 @@ const UserAnswerList = ({
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'stretch'
-        }}><KepoAnswerCard answer={answer}/></ListItem>
+        }}><KepoAnswerCard answer={answer} user={user}/></ListItem>
     )
 
     const loadAnswers = (

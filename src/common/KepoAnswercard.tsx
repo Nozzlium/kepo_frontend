@@ -15,7 +15,7 @@ interface AnswerCardState {
     isEditDialogOpen: boolean 
 }
 
-const QuestionOptions = (
+const AnswerOptions = (
     {
         user,
         answer,
@@ -82,7 +82,7 @@ const KepoAnswerCard = (
         answer,
         canEdit
     }: {
-        user: User,
+        user?: User,
         answer: Answer,
         canEdit?: boolean
     }
@@ -163,16 +163,35 @@ const KepoAnswerCard = (
             flexDirection: 'column'
         }}
     >
-        //TODO
-        {/* {
+        
+        {
             canEdit ? 
-            <NewAnswerModal/> :
+            <NewAnswerModal
+                open={answerCardState.isEditDialogOpen}
+                forEdit={answerCardState.answer}
+                closeDialog={() => {
+                    setAnswerCardState(prev => {
+                        const next = {...prev}
+                        next.isEditDialogOpen = false
+                        return next
+                    })
+                }}
+                onAnswerPosted={(answer) => {
+                    setAnswerCardState(prev => {
+                        const next = {...prev}
+                        next.answer = answer
+                        next.isEditDialogOpen = false
+                        return next
+                    })
+                }}
+            /> :
             null
-        } */}
+        }
         <Sheet
             sx={{
                 display: 'flex',
                 flexDirection: 'row',
+                py: 1
             }}
         >
             <Sheet
@@ -196,22 +215,47 @@ const KepoAnswerCard = (
                 </Button>
                 <Typography level="body-xs"><b>{answerCardState.answer.likes}</b></Typography>
             </Sheet>
-            <Sheet
-                sx={{
-                    padding: 1,
+            <div
+                style={{
                     display: 'flex',
                     flexDirection: 'column',
+                    width: '100%',
                 }}
             >
-                <Typography
-                    level="body-xs"
+                <Sheet
+                    sx={{
+                        padding: 1,
+                        display: 'flex',
+                        flexDirection: 'column'
+                    }}
                 >
-                    Answered by {
-                        <b><Link href={"/profile/" + answerCardState.answer.user.id} color="neutral">{answerDisplay.user.username}</Link></b>
-                    }, {answerCardState.answer.createdAt}
-                </Typography>
-                <Typography level="body-sm">{answerCardState.answer.content}</Typography>
-            </Sheet>
+                    <Typography
+                        level="body-xs"
+                    >
+                        Answered by {
+                            <b><Link href={"/profile/" + answerCardState.answer.user.id} color="neutral">{answerCardState.answer.user.username}</Link></b>
+                        }, {answerCardState.answer.createdAt}
+                    </Typography>
+                    <Typography level="body-sm">{answerCardState.answer.content}</Typography>
+                </Sheet>
+                <div>
+                    <AnswerOptions
+                        user={user}
+                        answer={answerCardState.answer}
+                        loading={answerCardState.deleteButton === UIStatus.LOADING}
+                        disabled={false}
+                        canEdit={canEdit ?? false}
+                        onDeleteClick={() => {}}
+                        onEditClicked={() => {
+                            setAnswerCardState(prev => {
+                                const next = {...prev}
+                                next.isEditDialogOpen = true
+                                return next
+                            })
+                        }}
+                    />
+                </div>
+            </div>
         </Sheet>
         <Divider/>
     </Sheet>
