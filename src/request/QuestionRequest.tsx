@@ -4,8 +4,8 @@ import { QuestionParam, PostQuestionParam } from "../param/QuestionParam";
 import QuestionsResponse from "../response/QuestionsResponse";
 import networkCall from "./NetworkCall";
 import QuestionResponse from "../response/QuestionResponse";
-import { UnauthorizedError } from "../error/KepoError";
-import { UNAUTHORIZED } from "../constants/error-code";
+import { NotFoundError, UnauthorizedError } from "../error/KepoError";
+import { NOT_FOUND, UNAUTHORIZED } from "../constants/error-code";
 
 class QuestionRequest {
     getFeed: (param: QuestionParam) => Promise<[questions:Question[], page: number]> = async (param: QuestionParam) => {
@@ -18,6 +18,11 @@ class QuestionRequest {
             `http://localhost:2637/api/question/${id}`,
             { signal: signal }
         )
+
+        if (response.data.code == NOT_FOUND) {
+            throw new NotFoundError(response.data.status)
+        }
+
         const question = response.data.data
         return question
     }

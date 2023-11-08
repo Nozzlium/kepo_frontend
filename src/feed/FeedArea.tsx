@@ -1,4 +1,4 @@
-import { Box, Button, ListItem, Select, Option, List } from "@mui/joy"
+import { Box, Button, ListItem, Select, Option, List, Typography } from "@mui/joy"
 import { useEffect, useState } from "react"
 import NewQuestionModal from "./NewQuestionModal"
 import Progress from "../common/Progress"
@@ -228,11 +228,17 @@ const FeedArea = () => {
                         }}
                         onChange={handleChange}
                     >{categoryItems}</Select>
-                    <List sx={{
-                        listStyleType: 'none',
-                        p: 0,
-                        mb: 1
-                    }} >{listItem}</List>
+                    {
+                        questionsState.data.length > 0 ?
+                        <List sx={{
+                            listStyleType: 'none',
+                            p: 0,
+                            mb: 1
+                        }} >{listItem}</List> :
+                        <Typography
+                            level="body-sm"
+                        ><b>Tidak ada pertanyaan</b></Typography>
+                    }
                     <Button 
                         variant="plain" 
                         color="neutral" 

@@ -1,4 +1,4 @@
-import { ListItem, Sheet, List, Button } from "@mui/joy"
+import { ListItem, Sheet, List, Button, Typography } from "@mui/joy"
 import { useEffect, useRef, useState } from "react"
 import KepoQuestionCard from "../common/KepoQuestionCard"
 import Question from "../data/Question"
@@ -80,10 +80,27 @@ const UserLikedQuestions = (
             flexDirection: 'column'
         }}
     >
-        <List style={{
-            listStyleType: 'none',
-            padding: 0
-        }} >{items}</List>
+        {
+            questionsState.data.length > 0 ?
+            <List style={{
+                listStyleType: 'none',
+                padding: 0
+            }} >{items}</List> :
+            <div
+                style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    width: '100%',
+                    padding: '16px 0 16px 0'
+                }}
+            >
+                <Typography
+                    level="body-sm"
+                ><b>Tidak ada pertanyaan</b></Typography>
+            </div>
+        }
         <Button 
             variant="plain" 
             color="neutral" 

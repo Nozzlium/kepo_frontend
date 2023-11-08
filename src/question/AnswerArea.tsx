@@ -1,4 +1,4 @@
-import { Box, Button, Dropdown, Menu, MenuButton, MenuItem, Sheet } from "@mui/joy"
+import { Box, Button, Dropdown, Menu, MenuButton, MenuItem, Sheet, Typography } from "@mui/joy"
 import KepoQuestionCard from "../common/KepoQuestionCard"
 import Question from "../data/Question"
 import Answer from "../data/Answer"
@@ -16,11 +16,13 @@ import userDetailRequest from "../request/UserDetailsRequest"
 import { Sort } from "@mui/icons-material"
 import { MOST_LIKED, NEWEST } from "../lib/constants"
 import { AnswerParam } from "../param/AnswerParam"
+import { KepoError } from "../error/KepoError"
 
 interface QuestionPageState {
     status: UIStatus.LOADING | UIStatus.SUCCESS | UIStatus.ERROR,
     data?: Question,
-    user?: User
+    user?: User,
+    error?: KepoError
 }
 
 interface AnswersState {
@@ -81,6 +83,23 @@ const AnswerArea = () => {
                 questionPageState.data = questionResult
             } catch (error) {
                 if (signal?.aborted) {
+                    return
+                }
+                if (error instanceof KepoError) {
+                    setQuestionState(prev => {
+                        const next = {...prev}
+                        next.status = UIStatus.ERROR
+                        next.error = error as KepoError
+                        return next
+                    })
+                    return
+                } else {
+                    setQuestionState(prev => {
+                        const next = {...prev}
+                        next.status = UIStatus.ERROR
+                        next.error = new KepoError("Unknown", "unknown error")
+                        return next
+                    })
                     return
                 }
             }
@@ -189,6 +208,23 @@ const AnswerArea = () => {
         ))
     }
 
+    if (questionState.status === UIStatus.ERROR) {
+        return <div
+                style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    width: '100%',
+                    padding: '16px 0 16px 0'
+                }}
+            >
+                <Typography
+                    level="body-sm"
+                ><b>{questionState.error?.message ?? ""}</b></Typography>
+            </div>
+    }
+
     return <Box
         sx={(theme) => ({
             [theme.breakpoints.down('md')]: {
@@ -271,10 +307,27 @@ const AnswerArea = () => {
                             boxShadow: 'md'
                         }}
                     >
-                        <ul style={{
+                        {
+                            answersState.data.length > 0 ?
+                            <ul style={{
                                 listStyleType: 'none',
                                 padding: 0
-                            }}>{getListItems(questionState.user)}</ul>
+                            }}>{getListItems(questionState.user)}</ul> :
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    width: '100%',
+                                    padding: '16px 0 16px 0'
+                                }}
+                            >
+                                <Typography
+                                    level="body-sm"
+                                ><b>Tidak ada jawaban</b></Typography>
+                            </div>
+                        }
                     </Sheet>
                     <Button 
                         variant="plain" 

@@ -18,3 +18,9 @@ export class UserAlreadyExistsError extends KepoError {
         super("UserAlreadyExistsError", message)
     }
 }
+
+export class NotFoundError extends KepoError {
+    constructor(message: string) {
+        super("NotFoundError", message)
+    }
+}

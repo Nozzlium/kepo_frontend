@@ -1,4 +1,4 @@
-import { Box, Button, List, ListItem, Sheet } from "@mui/joy"
+import { Box, Button, List, ListItem, Sheet, Typography } from "@mui/joy"
 import { useEffect, useState } from "react"
 import Question from "../data/Question"
 import KepoQuestionCard from "../common/KepoQuestionCard"
@@ -6,6 +6,7 @@ import User from "../data/User"
 import questionRequest from "../request/QuestionRequest"
 import { UIStatus } from "../lib/ui-status"
 import axios, { CancelToken } from "axios"
+import ListElement from "../common/ListElement"
 
 interface QuestionsState {
     status: UIStatus.IDLE | UIStatus.LOADING | UIStatus.SUCCESS | UIStatus.ERROR,
@@ -79,10 +80,32 @@ const UserQuestionsList = ({
             flexDirection: 'column'
         }}
     >
-        <List style={{
-            listStyleType: 'none',
-            padding: 0
-        }} >{items}</List>
+        {/* {
+            questionsState.data.length > 0 ?
+            <List style={{
+                listStyleType: 'none',
+                padding: 0
+            }} >{items}</List> :
+            <div
+                style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    width: '100%',
+                    padding: '16px 0 16px 0'
+                }}
+            >
+                <Typography
+                    level="body-sm"
+                ><b>Tidak ada pertanyaan</b></Typography>
+            </div>
+        } */}
+        <ListElement
+            status={questionsState.status}
+            items={items}
+            emptyMessage="Tidak ada pertanyaan"
+        />
         <Button 
             variant="plain" 
             color="neutral" 
