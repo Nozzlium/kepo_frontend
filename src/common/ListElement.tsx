@@ -11,10 +11,10 @@ const ListElement = ({
         emptyMessage?: string
     }
 ) => {
-    if (status === UIStatus.LOADING)
-        return null
-
-    if (items.length === 0) 
+    if (items.length === 0) {
+        if (status === UIStatus.LOADING)
+            return null
+        
         return <div
             style={{
                 display: 'flex',
@@ -29,6 +29,7 @@ const ListElement = ({
                 level="body-sm"
             ><b>{emptyMessage ?? ""}</b></Typography>
         </div>
+    }
 
     return <List style={{
                 listStyleType: 'none',

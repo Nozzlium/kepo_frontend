@@ -13,6 +13,7 @@ import questionRequest from "../request/QuestionRequest"
 import categoriesRequest from "../request/CategoriesRequest"
 import User from "../data/User"
 import userDetailRequest from "../request/UserDetailsRequest"
+import ListElement from "../common/ListElement"
 
 interface FeedPageState {
     status: UIStatus.IDLE | UIStatus.SUCCESS | UIStatus.LOADING | UIStatus.ERROR,
@@ -81,7 +82,13 @@ const FeedArea = () => {
 
             try {
                 const categories = await categoriesRequest.getCategories(signal)
-                tempFeedPageState.data = categories
+                tempFeedPageState.data = [
+                    {
+                        id: 0,
+                        name: "Semua ketegori"
+                    },
+                    ...categories
+                ]
             } catch (error) {
                 if (signal?.aborted) {
                     return
@@ -195,7 +202,7 @@ const FeedArea = () => {
                 closeDialog={() => closeNewQuestionDialog()}
                 onQuestionPosted={onQuestionPosted}
                 categories={{
-                    categories: feedPageState.data,
+                    categories: feedPageState.data.filter(category => category.id !== 0),
                     selected: questionsState.selectedCategory
                 }}
             />
@@ -220,7 +227,7 @@ const FeedArea = () => {
                         >Login to post a question</Button>
                     }
                     <Select 
-                        defaultValue={1}
+                        defaultValue={0}
                         variant="soft"
                         sx={{
                             my: 1,
@@ -228,17 +235,11 @@ const FeedArea = () => {
                         }}
                         onChange={handleChange}
                     >{categoryItems}</Select>
-                    {
-                        questionsState.data.length > 0 ?
-                        <List sx={{
-                            listStyleType: 'none',
-                            p: 0,
-                            mb: 1
-                        }} >{listItem}</List> :
-                        <Typography
-                            level="body-sm"
-                        ><b>Tidak ada pertanyaan</b></Typography>
-                    }
+                    <ListElement
+                        status={questionsState.status}
+                        items={listItem}
+                        emptyMessage="Tidak ada pertanyaan"
+                    />
                     <Button 
                         variant="plain" 
                         color="neutral" 

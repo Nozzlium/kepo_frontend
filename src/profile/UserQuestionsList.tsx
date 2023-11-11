@@ -80,27 +80,6 @@ const UserQuestionsList = ({
             flexDirection: 'column'
         }}
     >
-        {/* {
-            questionsState.data.length > 0 ?
-            <List style={{
-                listStyleType: 'none',
-                padding: 0
-            }} >{items}</List> :
-            <div
-                style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    width: '100%',
-                    padding: '16px 0 16px 0'
-                }}
-            >
-                <Typography
-                    level="body-sm"
-                ><b>Tidak ada pertanyaan</b></Typography>
-            </div>
-        } */}
         <ListElement
             status={questionsState.status}
             items={items}

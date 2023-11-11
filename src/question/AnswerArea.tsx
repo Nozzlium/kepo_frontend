@@ -17,6 +17,7 @@ import { Sort } from "@mui/icons-material"
 import { MOST_LIKED, NEWEST } from "../lib/constants"
 import { AnswerParam } from "../param/AnswerParam"
 import { KepoError } from "../error/KepoError"
+import ListElement from "../common/ListElement"
 
 interface QuestionPageState {
     status: UIStatus.LOADING | UIStatus.SUCCESS | UIStatus.ERROR,
@@ -301,7 +302,7 @@ const AnswerArea = () => {
                             >Newest</MenuItem>
                         </Menu>
                     </Dropdown>
-                    <Sheet
+                    {/* <Sheet
                         sx={{
                             borderRadius: 'sm',
                             boxShadow: 'md'
@@ -328,7 +329,12 @@ const AnswerArea = () => {
                                 ><b>Tidak ada jawaban</b></Typography>
                             </div>
                         }
-                    </Sheet>
+                    </Sheet> */}
+                    <ListElement
+                        status={answersState.status}
+                        items={getListItems(questionState.user)}
+                        emptyMessage="Tidak ada jawaban"
+                    />
                     <Button 
                         variant="plain" 
                         color="neutral" 

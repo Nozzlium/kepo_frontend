@@ -6,6 +6,7 @@ import User from "../data/User"
 import answerRequest from "../request/AnswerRequest"
 import { UIStatus } from "../lib/ui-status"
 import axios, { CancelToken } from "axios"
+import ListElement from "../common/ListElement"
 
 interface AnswersState {
     page: number,
@@ -82,27 +83,11 @@ const UserAnswerList = ({
             flexDirection: 'column',
         }}
     >
-        {
-            answersState.data.length > 0 ?
-            <List style={{
-                listStyleType: 'none',
-                padding: 0
-            }} >{items}</List> :
-            <div
-                style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    width: '100%',
-                    padding: '16px 0 16px 0'
-                }}
-            >
-                <Typography
-                    level="body-sm"
-                ><b>Tidak ada pertanyaan</b></Typography>
-            </div>
-        }
+        <ListElement
+            status={answersState.status}
+            items={items}
+            emptyMessage="Tidak ada pertanyaan"
+        />
         <Button 
             variant="plain" 
             color="neutral" 
