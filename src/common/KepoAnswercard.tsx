@@ -7,6 +7,8 @@ import { AnswerLikeParam } from "../param/LikeParam"
 import User from "../data/User"
 import NewAnswerModal from "../question/NewAnswerModal"
 import { UIStatus } from "../lib/ui-status"
+import { KepoError, UnauthorizedError } from "../error/KepoError"
+import { useNavigate } from "react-router-dom"
 
 interface AnswerCardState {
     answer?: Answer,
@@ -87,6 +89,7 @@ const KepoAnswerCard = (
         canEdit?: boolean
     }
 ) => {
+    const navigate = useNavigate()
     const [answerCardState, setAnswerCardState] = useState<AnswerCardState>({
         answer: answer,
         likeButton: UIStatus.IDLE,
@@ -124,7 +127,11 @@ const KepoAnswerCard = (
                     return next
                 })
             } catch (error) {
-
+                if (error instanceof KepoError) {
+                    if (error instanceof UnauthorizedError) {
+                        navigate("/login")
+                    }
+                }
             }
         })()
     }

@@ -9,6 +9,7 @@ import questionRequest from "../request/QuestionRequest"
 import User from "../data/User"
 import { useNavigate } from "react-router-dom"
 import NewQuestionModal from "../feed/NewQuestionModal"
+import { KepoError, UnauthorizedError } from "../error/KepoError"
 
 interface QuestionCardState {
     question?: Question,
@@ -119,7 +120,11 @@ const KepoQuestionCard = (
                     })
                 }
             } catch (error) {
-                
+                if (error instanceof KepoError) {
+                    if (error instanceof UnauthorizedError) {
+                        navigate("/login")
+                    }
+                }
             }
         })()
     }

@@ -42,6 +42,14 @@ const UserContentArea = () => {
     }
 
     useEffect(() => {
+        setUserState(prev => {
+            const next = {...prev}
+            next.status = UIStatus.LOADING
+            return next
+        })
+    }, [id]);
+
+    useEffect(() => {
         if (userState.status === UIStatus.LOADING) {
             loadUser(id ? id : "0")
         }
