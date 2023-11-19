@@ -57,7 +57,6 @@ const NewQuestionModal = ({
         newValue: number | null,
     ) => {
         setPostQuestionParam(prev => {
-            console.log(newValue)
             const next = {...prev}
             next.categoryId = newValue ?? 0
             return next
@@ -156,8 +155,6 @@ const NewQuestionModal = ({
     }, [open])
 
     useEffect(() => {
-        console.log("rendered")
-        console.log(newQuestionState)
     }, [newQuestionState])
 
     useEffect(() => {

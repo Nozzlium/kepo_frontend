@@ -54,7 +54,6 @@ const UserQuestionsList = ({
     )
 
     const loadMore = () => {
-        console.log("masuk load more")
         setQuestionsState(prev => {
             const next = {...prev}
             next.status = UIStatus.LOADING

@@ -14,11 +14,13 @@ import categoriesRequest from "../request/CategoriesRequest"
 import User from "../data/User"
 import userDetailRequest from "../request/UserDetailsRequest"
 import ListElement from "../common/ListElement"
+import { KepoError, UnauthorizedError } from "../error/KepoError"
 
 interface FeedPageState {
     status: UIStatus.IDLE | UIStatus.SUCCESS | UIStatus.LOADING | UIStatus.ERROR,
     user?: User,
     data: Category[],
+    error?: KepoError
 }
 
 interface QuestionsState {
@@ -26,10 +28,17 @@ interface QuestionsState {
     data: Question[],
     page: number,
     selectedCategory: number,
-    newQuestionDialogOpen: boolean
+    newQuestionDialogOpen: boolean,
+    error?: KepoError
 }
 
-const FeedArea = () => {
+const FeedArea = (
+    {
+        onError
+    }: {
+        onError: (error?: KepoError) => void
+    }
+) => {
     const navigate = useNavigate()
     const [feedPageState, setFeedPageState] = useState<FeedPageState>({
         status: UIStatus.LOADING,
@@ -78,6 +87,28 @@ const FeedArea = () => {
                 if (signal?.aborted) {
                     return
                 }
+
+                switch (true) {
+                    case error instanceof UnauthorizedError:
+                        break
+                    case error instanceof KepoError:
+                        setFeedPageState(prev => {
+                            const next = {...prev}
+                            next.status = UIStatus.ERROR
+                            next.error = error as KepoError
+                            return next
+                        })
+                        break
+                    default:
+                        setFeedPageState(prev => {
+                            const next = {...prev}
+                            next.status = UIStatus.ERROR
+                            next.error = new KepoError("UnknownError", "Udin")
+                            return next
+                        })
+                        break
+                }
+
             }
 
             try {
@@ -93,6 +124,25 @@ const FeedArea = () => {
                 if (signal?.aborted) {
                     return
                 }
+
+                switch (true) {
+                    case error instanceof KepoError:
+                        setFeedPageState(prev => {
+                            const next = {...prev}
+                            next.status = UIStatus.ERROR
+                            next.error = error as KepoError
+                            return next
+                        })
+                        break
+                    default:
+                        setFeedPageState(prev => {
+                            const next = {...prev}
+                            next.status = UIStatus.ERROR
+                            next.error = new KepoError("UnknownError", "Udin")
+                            return next
+                        })
+                        break
+                }
             }
             setFeedPageState(_prev => {
                 return tempFeedPageState
@@ -103,8 +153,8 @@ const FeedArea = () => {
     const loadQuestions = (
         cancelToken?: CancelToken
     ) => {
-        try {
-            (async () => {
+        (async () => {
+            try {
                 const [questions, page] = await questionRequest.getFeed({
                     pageNo: questionsState.page + 1,
                     pageSize: 10,
@@ -119,10 +169,27 @@ const FeedArea = () => {
                     next.status = UIStatus.SUCCESS
                     return next
                 })
-            })()
-        } catch (error) {
-            
-        }
+            } catch (error) {
+                switch (true) {
+                    case error instanceof KepoError:
+                        setQuestionsState(prev => {
+                            const next = {...prev}
+                            next.status = UIStatus.ERROR
+                            next.error = error as KepoError
+                            return next
+                        })
+                        break
+                    default:
+                        setQuestionsState(prev => {
+                            const next = {...prev}
+                            next.status = UIStatus.ERROR
+                            next.error = new KepoError("UnknownError", "Udin")
+                            return next
+                        })
+                        break
+                }
+            }
+        })()
     }
 
     useEffect(() => {
@@ -138,6 +205,11 @@ const FeedArea = () => {
                 return next
             })
         }
+        if (feedPageState.status === UIStatus.ERROR) {
+            if (onError) {
+                onError((feedPageState.error))
+            }
+        }
 
         return () => {
             controller.abort()
@@ -147,7 +219,12 @@ const FeedArea = () => {
     useEffect(() => {
         if (questionsState.status === UIStatus.LOADING) {
             loadQuestions()
-        } 
+        }
+        if (questionsState.status === UIStatus.ERROR) {
+            if (onError) {
+                onError(questionsState.error)
+            }
+        }
     }, [questionsState])
 
     const handleChange = (

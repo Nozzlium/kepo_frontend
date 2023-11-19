@@ -8,11 +8,12 @@ import userDetailRequest, { UserDetailsRequest } from "../request/UserDetailsReq
 import Progress from "./Progress"
 import { UIStatus } from "../lib/ui-status"
 import token from "../lib/Token"
-import { UnauthorizedError } from "../error/KepoError"
+import { KepoError, UnauthorizedError } from "../error/KepoError"
 
 interface NavbarState {
     user?: User,
-    status: UIStatus.LOADING | UIStatus.SUCCESS | UIStatus.ERROR | UIStatus.IDLE
+    status: UIStatus.LOADING | UIStatus.SUCCESS | UIStatus.ERROR | UIStatus.IDLE,
+    error?: KepoError
 }
 
 const ProfileMenuButton = (
@@ -60,7 +61,13 @@ const ProfileMenuButton = (
     }
 }
 
-const KepoNavbar = () => {
+const KepoNavbar = (
+    {
+        onError
+    }: {
+        onError?: (error: KepoError) => void
+    }
+) => {
     const navigate = useNavigate()
     const [navbarState, setNavbarState] = useState<NavbarState>({
         status: UIStatus.LOADING
@@ -111,10 +118,28 @@ const KepoNavbar = () => {
                     status: UIStatus.SUCCESS
                 })
             } catch (error) {
-                if (error instanceof UnauthorizedError) {
-                    setNavbarState({
-                        status: UIStatus.IDLE
-                    })
+                if (signal?.aborted) {
+                    return
+                }
+
+                switch (true) {
+                    case error instanceof UnauthorizedError:
+                        setNavbarState({
+                            status: UIStatus.IDLE
+                        })
+                        break
+                    case error instanceof KepoError:
+                        setNavbarState({
+                            status: UIStatus.ERROR,
+                            error: error as KepoError
+                        })
+                        break
+                    default:
+                        setNavbarState({
+                            status: UIStatus.ERROR,
+                            error: new KepoError("", "")
+                        })
+                        break
                 }
             }
         })()
@@ -124,6 +149,11 @@ const KepoNavbar = () => {
         const controller = new AbortController()
         if (navbarState.status === UIStatus.LOADING) {
             loadUser(controller.signal)
+        }
+
+        if (navbarState.status === UIStatus.ERROR) {
+            if (onError)
+                onError(navbarState.error ?? new KepoError("", ""))
         }
 
         return () => {

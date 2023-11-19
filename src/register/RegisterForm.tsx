@@ -124,7 +124,7 @@ const RegisterForm = () => {
     }, [registerState])
 
     return <Sheet
-        variant="outlined"
+        variant="soft"
         sx={styleform}
     >
         <CredentialAlert registerState={registerState} setRegisterState={setRegisterState} />
