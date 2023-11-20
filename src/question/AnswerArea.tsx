@@ -4,7 +4,7 @@ import Question from "../data/Question"
 import Answer from "../data/Answer"
 import { useEffect, useRef, useState } from "react"
 import KepoAnswerCard from "../common/KepoAnswercard"
-import NewAnswerModal from "./NewAnswerModal"
+import NewAnswerModal from "../common/NewAnswerModal"
 import Progress from "../common/Progress"
 import { useNavigate, useParams } from "react-router-dom"
 import questionRequest from "../request/QuestionRequest"
@@ -31,14 +31,21 @@ interface AnswersState {
     page: number,
     data: Answer[],
     sort: number,
-    newAnswerDialogOpen: boolean
+    newAnswerDialogOpen: boolean,
+    error?: KepoError
 }
 
 type RouteParams = {
     id: string
 }
 
-const AnswerArea = () => {
+const AnswerArea = (
+    {
+        onError
+    } : {
+        onError?: (error?: KepoError) => void
+    }
+) => {
     const navigate = useNavigate()
     const [questionState, setQuestionState] = useState<QuestionPageState>({
         status: UIStatus.LOADING
@@ -111,8 +118,8 @@ const AnswerArea = () => {
     }
 
     const loadAnswers = () => {
-        try {
-            (async () => {
+        (async () => {
+            try {
                 if (questionState.status === UIStatus.SUCCESS && questionState.data) {
                     const answerParams: AnswerParam = {
                         pageNo: answersState.page + 1,
@@ -120,11 +127,11 @@ const AnswerArea = () => {
                         sortBy: "LKE",
                         order: "DESC"
                     }
-
+    
                     if (answersState.sort === NEWEST) {
                         answerParams.sortBy = "DTE"
                     }
-
+    
                     const [answersResult, currentPage] = await answerRequest.getByQuestion(
                         questionState.data.id, answerParams)
                     setAnswersState(prev => {
@@ -137,10 +144,27 @@ const AnswerArea = () => {
                         return next
                     })
                 }
-            })()   
-        } catch (error) {
-            
-        }
+            } catch (error) {
+                switch (true) {
+                    case error instanceof KepoError:
+                        setAnswersState(prev => {
+                            const next = {...prev}
+                            next.status = UIStatus.ERROR
+                            next.error = error as KepoError
+                            return next
+                        })
+                        break
+                    default:
+                        setAnswersState(prev => {
+                            const next = {...prev}
+                            next.status = UIStatus.ERROR
+                            next.error = new KepoError("UnknownError", "Udin")
+                            return next
+                        })
+                        break
+                }
+            }
+        })()  
     }
 
     const loadMore = () => {
@@ -186,6 +210,11 @@ const AnswerArea = () => {
     useEffect(() => {
         if (answersState.status === UIStatus.LOADING) {
             loadAnswers()
+        }
+        if (answersState.status === UIStatus.ERROR) {
+            if (onError) {
+                onError(answersState.error)
+            }
         }
     }, [answersState])
 

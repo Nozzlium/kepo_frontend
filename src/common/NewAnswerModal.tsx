@@ -10,7 +10,7 @@ import { DialogContent } from "@mui/material"
 import { KepoError, UnauthorizedError } from "../error/KepoError"
 import { useNavigate } from "react-router-dom"
 import { Close } from "@mui/icons-material"
-import KepoConfirmationDialog from "../common/KepoConfirmationDialog"
+import KepoConfirmationDialog from "./KepoConfirmationDialog"
 
 interface NewAnswerState {
     answer: string,
