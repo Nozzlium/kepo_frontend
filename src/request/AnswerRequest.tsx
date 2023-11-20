@@ -14,11 +14,11 @@ export class AnswerRequest {
         return [responseData.answers, responseData.page]
     }
 
-    getByUser: (userId: number, param: AnswerParam, cancelToken?: CancelToken) => Promise<[Answer[], number]> = async (userId: number, param: AnswerParam, cancelToken?: CancelToken) => {
+    getByUser: (userId: number, param: AnswerParam, signal?: AbortSignal) => Promise<[Answer[], number]> = async (userId: number, param: AnswerParam, signal?: AbortSignal) => {
         const url = `http://localhost:2637/api/user/${userId}/answer`
         const response = await networkCall.get<AnswersResponse>(url, {
             params: param,
-            cancelToken: cancelToken
+            signal: signal
         })
         const responseData = response.data.data
         return [responseData.answers, responseData.page]

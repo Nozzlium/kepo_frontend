@@ -4,39 +4,32 @@ import KepoNavbar from "../common/KepoNavbar"
 import UserContentArea from "./UserContentArea"
 import { useState, useRef, useEffect } from "react"
 import Progress from "../common/Progress"
+import { UIStatus } from "../lib/ui-status"
+import { KepoError } from "../error/KepoError"
+import KepoGeneralErrorAlert from "../common/KepoGeneralErrorAlert"
 
-const MainView = (
-{
-    navbarHeight
-}: {
-    navbarHeight: number
-}) => {
-    if (navbarHeight === 0) {
-        return <Progress />
-    }
-    return <Sheet
-        sx={(theme) => ({
-            [theme.breakpoints.down('md')]: {
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'stretch',
-                mt: `${navbarHeight}px`
-            },
-            [theme.breakpoints.up('md')]: {
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems:'center',
-                mt: `${navbarHeight}px`
-            }
-        })}
-    >
-        <UserContentArea/>
-    </Sheet>
+interface ProfilePageState {
+    status: UIStatus.IDLE | UIStatus.ERROR
+    error?: KepoError
 }
 
 const Profile = () => {
-    const [navbarHeight, setNavbarHeight] = useState<number>(0)
-    const navbarRef = useRef<HTMLDivElement>()
+
+    const [profilePageState, setProfilePageState] = useState<ProfilePageState>({
+        status: UIStatus.IDLE
+    })
+
+    const onError = (error?: KepoError) => {
+        if (profilePageState.status === UIStatus.ERROR) {
+            return
+        }
+        setProfilePageState(_prev => {
+            return {
+                status: UIStatus.ERROR,
+                error: error ?? new KepoError("", "")
+            }
+        })
+    }
 
     return <Box
         className="page"
@@ -62,8 +55,21 @@ const Profile = () => {
                 }
             })}
         >
-            <UserContentArea/>
+            <UserContentArea
+                onError={onError}
+            />
         </Box>
+        <KepoGeneralErrorAlert
+            title={profilePageState.error?.message ?? "terjadi error"}
+            show={profilePageState.status === UIStatus.ERROR}
+            onCloseClicked={() => {
+                setProfilePageState(_prev => {
+                    return {
+                        status: UIStatus.IDLE
+                    }
+                })
+            }}
+        />
     </Box>
 }
 

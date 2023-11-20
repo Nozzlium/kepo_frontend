@@ -27,22 +27,22 @@ class QuestionRequest {
         return question
     }
 
-    getByUser: (userId: number, param: QuestionParam, cancelToken?: CancelToken) => Promise<[Question[], number]> = async (userId: number, param: QuestionParam, cancelToken?: CancelToken) => {
+    getByUser: (userId: number, param: QuestionParam, signal?: AbortSignal) => Promise<[Question[], number]> = async (userId: number, param: QuestionParam, signal?: AbortSignal) => {
         const url = `http://localhost:2637/api/user/${userId}/question`
         const response = await networkCall.get<QuestionsResponse>(url, {
             params: param,
-            cancelToken: cancelToken
+            signal: signal
         })
         const questions = response.data.data.questions
         const page = response.data.data.page
         return [questions, page]
     }
 
-    getLikedByUser: (userId: number, param: QuestionParam, cancelToken?: CancelToken) => Promise<[Question[], number]> = async (userId: number, param: QuestionParam, cancelToken?: CancelToken) => {
+    getLikedByUser: (userId: number, param: QuestionParam, signal?: AbortSignal) => Promise<[Question[], number]> = async (userId: number, param: QuestionParam, signal?: AbortSignal) => {
         const url = `http://localhost:2637/api/user/${userId}/question/like`
         const response = await networkCall.get<QuestionsResponse>(url, {
             params: param,
-            cancelToken: cancelToken
+            signal: signal
         })
         const questions = response.data.data.questions
         const page = response.data.data.page

@@ -8,18 +8,22 @@ import { QuestionParam } from "../param/QuestionParam"
 import { UIStatus } from "../lib/ui-status"
 import axios, { CancelToken } from "axios"
 import ListElement from "../common/ListElement"
+import { KepoError } from "../error/KepoError"
 
 interface QuestionsState {
-    page: number,
-    data: Question[],
+    page: number
+    data: Question[]
     status: UIStatus.LOADING | UIStatus.SUCCESS | UIStatus.ERROR
+    error?: KepoError
 }
 
 const UserLikedQuestions = (
     {
-        user
+        user,
+        onError
     }:{
-        user: User
+        user: User,
+        onError?: (error?: KepoError) => void
     }) => {
     const [questionsState, setQuestionsState] = useState<QuestionsState>({
         page: 0,
@@ -32,14 +36,14 @@ const UserLikedQuestions = (
     )
 
     const loadQuestions = (
-        cancelToken?: CancelToken
+        signal?: AbortSignal
     ) => {
         (async () => {
             try {
                 const [questionsResult, page] = await questionRequest.getLikedByUser(user.id, {
                     pageNo: questionsState.page + 1,
                     pageSize: 10
-                }, cancelToken)
+                }, signal)
                 setQuestionsState(prev => {
                     const next = {...prev}
                     if (questionsResult.length > 0) {
@@ -50,7 +54,28 @@ const UserLikedQuestions = (
                     return next
                 })
             } catch (error) {
-                
+                if (signal?.aborted) {
+                    return
+                }
+
+                switch (true) {
+                    case error instanceof KepoError:
+                        setQuestionsState(prev => {
+                            const next = {...prev}
+                            next.status = UIStatus.ERROR
+                            next.error = error as KepoError
+                            return next
+                        })
+                        break
+                    default:
+                        setQuestionsState(prev => {
+                            const next = {...prev}
+                            next.status = UIStatus.ERROR
+                            next.error = new KepoError("UnknownError", "Udin")
+                            return next
+                        })
+                        break
+                }
             }
         })()
     }
@@ -64,14 +89,18 @@ const UserLikedQuestions = (
     }
 
     useEffect(() => {
-        const CancelToken = axios.CancelToken;
-        const source = CancelToken.source();
+        const controller = new AbortController()
         if (questionsState.status === UIStatus.LOADING) {
-            loadQuestions(source.token)
+            loadQuestions(controller.signal)
+        }
+        if (questionsState.status === UIStatus.ERROR) {
+            if (onError) {
+                onError(questionsState.error)
+            }
         }
 
         return () => {
-            source.cancel()
+            controller.abort()
         }
     }, [questionsState])
 

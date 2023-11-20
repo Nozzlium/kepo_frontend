@@ -1,4 +1,4 @@
-import { Box, Button, List, ListItem, Sheet, Typography } from "@mui/joy"
+import { Box, Button, ListItem } from "@mui/joy"
 import { useEffect, useState } from "react"
 import Answer from "../data/Answer"
 import KepoAnswerCard from "../common/KepoAnswercard"
@@ -7,17 +7,21 @@ import answerRequest from "../request/AnswerRequest"
 import { UIStatus } from "../lib/ui-status"
 import axios, { CancelToken } from "axios"
 import ListElement from "../common/ListElement"
+import { KepoError } from "../error/KepoError"
 
 interface AnswersState {
-    page: number,
-    data: Answer[],
+    page: number
+    data: Answer[]
     status: UIStatus.LOADING | UIStatus.SUCCESS | UIStatus.ERROR
+    error?: KepoError
 }
 
 const UserAnswerList = ({
-    user
+    user,
+    onError
 }:{
-    user: User
+    user: User,
+    onError?: (error?: KepoError) => void
 }) => {
     const [answersState, setAnswersState] = useState<AnswersState>({
         page: 0,
@@ -34,14 +38,14 @@ const UserAnswerList = ({
     )
 
     const loadAnswers = (
-        cancelToken?: CancelToken
+        signal?: AbortSignal
     ) => {
         (async () => {
             try {
                 const [answersResult, currentPage] = await answerRequest.getByUser(user.id, {
                     pageNo: answersState.page + 1,
                     pageSize: 10
-                }, cancelToken)
+                }, signal)
                 setAnswersState(prev => {
                     const next = {...prev}
                     if (answersResult.length > 0) {
@@ -52,7 +56,29 @@ const UserAnswerList = ({
                     return next
                 })
             } catch (error) {
-                
+                if (signal?.aborted) {
+                    return
+                }
+
+                switch (true) {
+                    case error instanceof KepoError:
+                        setAnswersState(prev => {
+                            const next = {...prev}
+                            next.status = UIStatus.ERROR
+                            next.error = error as KepoError
+                            return next
+                        })
+                        break
+                    default:
+                        console.log(error)
+                        setAnswersState(prev => {
+                            const next = {...prev}
+                            next.status = UIStatus.ERROR
+                            next.error = new KepoError("UnknownError", "Udin")
+                            return next
+                        })
+                        break
+                }
             }
         })()
     }
@@ -66,14 +92,18 @@ const UserAnswerList = ({
     }
 
     useEffect(() => {
-        const cancelToken = axios.CancelToken;
-        const source = cancelToken.source();
+        const controller = new AbortController()
         if (answersState.status === UIStatus.LOADING) {
-            loadAnswers(source.token)
+            loadAnswers(controller.signal)
+        }
+        if (answersState.status === UIStatus.ERROR) {
+            if (onError) {
+                onError(answersState.error)
+            }
         }
 
         return () => {
-            source.cancel()
+            controller.abort()
         }
     }, [answersState])
 

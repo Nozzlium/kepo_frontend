@@ -8,17 +8,25 @@ import userDetailRequest from "../request/UserDetailsRequest"
 import { useEffect, useRef, useState } from "react"
 import Progress from "../common/Progress"
 import { UIStatus } from "../lib/ui-status"
+import { KepoError } from "../error/KepoError"
 
 type RouteParams = {
     id: string
 }
 
 interface UserState {
-    status: UIStatus.LOADING | UIStatus.SUCCESS | UIStatus.ERROR,
-    data?: User 
+    status: UIStatus.LOADING | UIStatus.SUCCESS | UIStatus.ERROR
+    data?: User
+    error?: KepoError
 }
 
-const UserContentArea = () => {
+const UserContentArea = (
+    {
+        onError
+    } : {
+        onError?: (error?: KepoError) => void
+    }
+) => {
     const [userState, setUserState] = useState<UserState>({
         status: UIStatus.LOADING,
     })
@@ -38,6 +46,24 @@ const UserContentArea = () => {
                 })
             })()
         } catch (error) {
+            switch (true) {
+                case error instanceof KepoError:
+                    setUserState(prev => {
+                        const next = {...prev}
+                        next.status = UIStatus.ERROR
+                        next.error = error as KepoError
+                        return next
+                    })
+                    break
+                default:
+                    setUserState(prev => {
+                        const next = {...prev}
+                        next.status = UIStatus.ERROR
+                        next.error = new KepoError("UnknownError", "Udin")
+                        return next
+                    })
+                    break
+            }
         }
     }
 
@@ -53,6 +79,12 @@ const UserContentArea = () => {
         if (userState.status === UIStatus.LOADING) {
             loadUser(id ? id : "0")
         }
+        if (userState.status === UIStatus.ERROR) {
+            if (onError) {
+                onError(userState.error)
+            }
+        }
+
     }, [userState])
 
     return <Box
@@ -97,13 +129,22 @@ const UserContentArea = () => {
                             <Tab>Likes</Tab>
                         </TabList>
                         <TabPanel value={0}>
-                            <UserQuestionsList user={userState.data}/>
+                            <UserQuestionsList 
+                                user={userState.data}
+                                onError={onError}
+                            />
                         </TabPanel>
                         <TabPanel value={1}>
-                            <UserAnswerList user={userState.data}/>
+                            <UserAnswerList 
+                                user={userState.data}
+                                onError={onError}
+                            />
                         </TabPanel>
                         <TabPanel value={2}>
-                            <UserLikedQuestions user={userState.data}/>
+                            <UserLikedQuestions 
+                                user={userState.data}
+                                onError={onError}
+                            />
                         </TabPanel>
                     </Tabs>
                 </>
