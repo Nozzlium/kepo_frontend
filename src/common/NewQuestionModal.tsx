@@ -6,7 +6,9 @@ import questionRequest from "../request/QuestionRequest"
 import { UIStatus } from "../lib/ui-status"
 import { KepoError, UnauthorizedError } from "../error/KepoError"
 import { useNavigate } from "react-router-dom"
-import KepoConfirmationDialog from "../common/KepoConfirmationDialog"
+import KepoConfirmationDialog from "./KepoConfirmationDialog"
+import KepoGeneralErrorAlert from "./KepoGeneralErrorAlert"
+import KepoDialogErrorAlert from "./KepoDialogAlert"
 
 interface NewQuestionState {
     categoryId: number,
@@ -48,7 +50,7 @@ const NewQuestionModal = ({
     })
 
     const isDataValid: boolean = 
-            newQuestionState.categoryId != 0
+            newQuestionState.categoryId !== 0
             && newQuestionState.content.length !== 0
             && newQuestionState.description.length !== 0
 
@@ -114,6 +116,26 @@ const NewQuestionModal = ({
                 if (error instanceof UnauthorizedError) {
                     navigate('/login')
                 }
+                switch (true) {
+                    case error instanceof UnauthorizedError:
+                        navigate('/login')
+                        break
+                    case error instanceof KepoError:
+                        setPostQuestionParam(prev => {
+                            const next = {...prev}
+                            next.status = UIStatus.ERROR
+                            next.error = error as KepoError
+                            return next
+                        })
+                        break
+                    default:
+                        setPostQuestionParam(prev => {
+                            const next = {...prev}
+                            next.status = UIStatus.ERROR
+                            next.error = new KepoError("", "")
+                            return next
+                        })
+                }
             }
         })()
     }
@@ -153,9 +175,6 @@ const NewQuestionModal = ({
             })
         }
     }, [open])
-
-    useEffect(() => {
-    }, [newQuestionState])
 
     useEffect(() => {
         if (newQuestionState.status === UIStatus.LOADING) {
@@ -234,8 +253,21 @@ const NewQuestionModal = ({
             sx={{
                 display: 'flex',
                 flexDirection: 'column',
+                gap: 1
             }}
         >
+            <KepoDialogErrorAlert
+                text={newQuestionState.error?.message}
+                show={newQuestionState.status === UIStatus.ERROR}
+                onClose={() => {
+                    setPostQuestionParam(prev => {
+                        const next = {...prev}
+                        next.status = UIStatus.IDLE
+                        next.error = undefined
+                        return next
+                    })
+                }}
+            />
             <Select
                 defaultValue={categories.selected}
                 variant="soft"
@@ -243,9 +275,6 @@ const NewQuestionModal = ({
                 onChange={onCategoryChange}
             >{categoryItems}</Select>
             <Input
-                sx={{
-                    my: 1
-                }}
                 placeholder="Your question here..."
                 required={true}
                 value={newQuestionState.content}

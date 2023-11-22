@@ -1,6 +1,6 @@
 import { Box, Button, ListItem, Select, Option, List, Typography } from "@mui/joy"
 import { useEffect, useState } from "react"
-import NewQuestionModal from "./NewQuestionModal"
+import NewQuestionModal from "../common/NewQuestionModal"
 import Progress from "../common/Progress"
 import Category from "../data/Category"
 import axios, { CancelToken } from "axios"
@@ -251,7 +251,7 @@ const FeedArea = (
     }
 
     const listItem = questionsState.data.map(question => 
-        <ListItem key={question.id}><KepoQuestionCard question={question} user={feedPageState.user}/></ListItem>
+        <ListItem key={question.id}><KepoQuestionCard question={question} user={feedPageState.user} onError={onError}/></ListItem>
     ) 
 
     const categoryItems = feedPageState.data.map(category => 

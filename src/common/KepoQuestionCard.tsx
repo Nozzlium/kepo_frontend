@@ -8,14 +8,15 @@ import { UIStatus } from "../lib/ui-status"
 import questionRequest from "../request/QuestionRequest"
 import User from "../data/User"
 import { useNavigate } from "react-router-dom"
-import NewQuestionModal from "../feed/NewQuestionModal"
+import NewQuestionModal from "./NewQuestionModal"
 import { KepoError, UnauthorizedError } from "../error/KepoError"
 
 interface QuestionCardState {
     question?: Question,
     likeButton: UIStatus.IDLE | UIStatus.ERROR | UIStatus.SUCCESS | UIStatus.LOADING,
     deleteButton: UIStatus.IDLE | UIStatus.ERROR | UIStatus.SUCCESS | UIStatus.LOADING,
-    isEditDialogOpen: boolean
+    isEditDialogOpen: boolean,
+    error?: KepoError
 }
 
 const QuestionOptions = (
@@ -83,12 +84,14 @@ const KepoQuestionCard = (
     {
         user,
         question,
-        canEdit
+        canEdit,
+        onError
     }: 
     {
         user?: User,
         question: Question,
-        canEdit?: boolean
+        canEdit?: boolean,
+        onError?: (error?: KepoError) => void
     }
 ) => {
     const navigate = useNavigate()
@@ -120,10 +123,26 @@ const KepoQuestionCard = (
                     })
                 }
             } catch (error) {
-                if (error instanceof KepoError) {
-                    if (error instanceof UnauthorizedError) {
+                switch (true) {
+                    case error instanceof UnauthorizedError: 
                         navigate("/login")
-                    }
+                        break
+                    case error instanceof KepoError:
+                        setQuestionCardState(prev => {
+                            const next = {...prev}
+                            next.likeButton = UIStatus.ERROR
+                            next.error = error as KepoError
+                            return next
+                        })
+                        break
+                    default:
+                        setQuestionCardState(prev => {
+                            const next = {...prev}
+                            next.likeButton = UIStatus.ERROR
+                            next.error = new KepoError("", "")
+                            return next
+                        })
+                        break
                 }
             }
         })()
@@ -147,7 +166,24 @@ const KepoQuestionCard = (
                     })
                 }
             } catch (error) {
-                
+                switch (true) {
+                    case error instanceof KepoError:
+                        setQuestionCardState(prev => {
+                            const next = {...prev}
+                            next.likeButton = UIStatus.ERROR
+                            next.error = error as KepoError
+                            return next
+                        })
+                        break
+                    default:
+                        setQuestionCardState(prev => {
+                            const next = {...prev}
+                            next.likeButton = UIStatus.ERROR
+                            next.error = new KepoError("", "")
+                            return next
+                        })
+                        break
+                }
             }
         })()
     }
@@ -195,7 +231,16 @@ const KepoQuestionCard = (
         })
     }
 
+    const interactionsInactive = 
+        questionCardState.likeButton === UIStatus.LOADING ||
+        questionCardState.deleteButton === UIStatus.LOADING
+
     useEffect(() => {
+
+        let hasError =
+            questionCardState.likeButton === UIStatus.ERROR ||
+            questionCardState.deleteButton === UIStatus.ERROR
+
         if (questionCardState.likeButton === UIStatus.LOADING) {
             likeQuestion() 
         }
@@ -204,11 +249,14 @@ const KepoQuestionCard = (
             deleteQuestion()
         }
 
+        if (hasError) {
+            if (onError) {
+                onError(questionCardState.error)
+            }
+        }
+
     }, [questionCardState])
 
-    const interactionsInactive = 
-        questionCardState.likeButton === UIStatus.LOADING ||
-        questionCardState.deleteButton === UIStatus.LOADING
 
     if (!questionCardState.question) {
         if (questionCardState.deleteButton === UIStatus.SUCCESS) {
