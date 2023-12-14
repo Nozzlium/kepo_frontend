@@ -1,9 +1,9 @@
 export class KepoError extends Error {
     message: string
-    constructor(name: string, message: string) {
+    constructor(name?: string, message?: string) {
         super(message)
-        this.name = name
-        this.message = message
+        this.name = name ?? "KepoError"
+        this.message = message ?? "Terjadi Error"
     }
 }
 

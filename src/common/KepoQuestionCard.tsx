@@ -139,7 +139,7 @@ const KepoQuestionCard = (
                         setQuestionCardState(prev => {
                             const next = {...prev}
                             next.likeButton = UIStatus.ERROR
-                            next.error = new KepoError("", "")
+                            next.error = new KepoError()
                             return next
                         })
                         break
@@ -179,7 +179,7 @@ const KepoQuestionCard = (
                         setQuestionCardState(prev => {
                             const next = {...prev}
                             next.likeButton = UIStatus.ERROR
-                            next.error = new KepoError("", "")
+                            next.error = new KepoError()
                             return next
                         })
                         break
@@ -306,7 +306,6 @@ const KepoQuestionCard = (
                 flexDirection: 'column',
                 p: 1,
                 alignItems: 'center',
-                justifyContent: 'center',
             }}
         >
             <Button 

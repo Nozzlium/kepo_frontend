@@ -9,6 +9,7 @@ import authRequest from "../request/AuthRequest"
 import { Close } from "@mui/icons-material"
 import token from "../lib/Token"
 import { UIStatus } from "../lib/ui-status"
+import KepoDialogErrorAlert from "../common/KepoDialogErrorAlert"
 
 interface LoginData {
     identity: string,
@@ -19,42 +20,6 @@ interface LoginState {
     data: LoginData,
     status: UIStatus.IDLE | UIStatus.LOADING | UIStatus.SUCCESS | UIStatus.ERROR,
     error?: KepoError
-}
-
-const CredentialAlert = (
-    {
-        loginState,
-        setLoginState
-    }:
-    {
-        loginState: LoginState,
-        setLoginState: Dispatch<SetStateAction<LoginState>>
-    }
-) => {
-    if (loginState.status === UIStatus.ERROR && loginState.error) {
-        return <Alert 
-            variant="soft"
-            color="danger"
-            sx={{
-                mt: 1
-            }}
-            endDecorator={
-                <IconButton variant="solid" size="sm" color="danger" onClick={() => {
-                    setLoginState(prev => {
-                        return {
-                            data: prev.data,
-                            status: UIStatus.IDLE
-                        }
-                    })
-                }}>
-                    <Close />
-                </IconButton>
-            }
-            >
-            Invalid Credentials
-        </Alert>
-    }
-    return null
 }
 
 const LoginForm = () => {
@@ -116,9 +81,17 @@ const LoginForm = () => {
             gap: 1
         }}
     >
-        <CredentialAlert 
-            loginState={loginState} 
-            setLoginState={setLoginState}
+        <KepoDialogErrorAlert
+            text={loginState.error?.message}
+            show={loginState.status === UIStatus.ERROR}
+            onClose={() => {
+                setLoginState(prev => {
+                    const next = {...prev}
+                    next.status = UIStatus.IDLE
+                    next.error = undefined
+                    return next
+                })
+            }}
         />
         <form 
             onSubmit={(event) => {

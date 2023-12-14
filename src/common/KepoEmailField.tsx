@@ -22,6 +22,7 @@ const KepoEmailField = (
         placeholder={placeholder ?? "Email"}
         variant="plain"
         value={value}
+        required
         onChange={onChange}
       />
     </FormControl>

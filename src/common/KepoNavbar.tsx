@@ -1,7 +1,7 @@
 import { Box, Divider, List, ListItem, ListItemButton, Dropdown, MenuButton, Menu, MenuItem, ListItemDecorator, Sheet } from "@mui/joy"
 import { NavigateOptions, NavigateProps, useLocation, useNavigate } from "react-router-dom"
 import icon from "../asset/icon.png"
-import { AccountBox, Logout } from "@mui/icons-material"
+import { AccountBox, Logout, Notifications } from "@mui/icons-material"
 import { Ref, forwardRef, useEffect, useRef, useState } from "react"
 import User from "../data/User"
 import userDetailRequest, { UserDetailsRequest } from "../request/UserDetailsRequest"
@@ -9,6 +9,8 @@ import Progress from "./Progress"
 import { UIStatus } from "../lib/ui-status"
 import token from "../lib/Token"
 import { KepoError, UnauthorizedError } from "../error/KepoError"
+import KepoNotificationCard from "./KepoNotificationCard"
+import KepoNotificationList from "./KepoNotificationList"
 
 interface NavbarState {
     user?: User,
@@ -59,6 +61,33 @@ const ProfileMenuButton = (
             </ListItemButton>
         }
     }
+}
+
+const NotificationMenuButton = (
+    {
+        status,
+        onNotificationSelected
+    } : {
+        status : UIStatus.LOADING | UIStatus.SUCCESS | UIStatus.ERROR,
+        onNotificationSelected: (notification: Notification) => void
+    }
+) => {
+    if (status === UIStatus.SUCCESS) {
+        return <Dropdown>
+            <MenuButton
+                variant="plain"
+            >
+                <Notifications/>
+            </MenuButton>
+            <Menu
+                className="notif-popup"
+            >
+                <KepoNotificationList/>
+            </Menu>
+        </Dropdown>
+    }
+
+    return <Progress/>
 }
 
 const KepoNavbar = (
@@ -137,7 +166,7 @@ const KepoNavbar = (
                     default:
                         setNavbarState({
                             status: UIStatus.ERROR,
-                            error: new KepoError("", "")
+                            error: new KepoError()
                         })
                         break
                 }
@@ -153,7 +182,7 @@ const KepoNavbar = (
 
         if (navbarState.status === UIStatus.ERROR) {
             if (onError)
-                onError(navbarState.error ?? new KepoError("", ""))
+                onError(navbarState.error ?? new KepoError())
         }
 
         return () => {
@@ -186,6 +215,10 @@ const KepoNavbar = (
                 </ListItemButton>
             </ListItem>
             <ListItem role="none" sx={{ marginInlineStart: 'auto' }}>
+                <NotificationMenuButton
+                    status={UIStatus.SUCCESS}
+                    onNotificationSelected={() => {}}
+                />
                 <ProfileMenuButton
                     navbarState={navbarState}
                     onUserOptionSelect={onUserOptionSelect}

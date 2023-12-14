@@ -27,7 +27,7 @@ const QuestionPage = () => {
         setQuestionPageState(_prev => {
             return {
                 status: UIStatus.ERROR,
-                error: error ?? new KepoError("", "")
+                error: error ?? new KepoError()
             }
         })
     }

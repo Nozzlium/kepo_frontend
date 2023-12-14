@@ -10,6 +10,7 @@ import Profile from './profile/Profile';
 import QuestionPage from './question/QuestionPage';
 import { CssVarsProvider, CssBaseline } from '@mui/joy';
 import token from './lib/Token';
+import NotificationPage from './notification/NotificationPage';
 
 function App() {
 
@@ -28,6 +29,7 @@ function App() {
             <Route path='/register' element={<Register/>}/>
             <Route path="/profile/:id" element={<Profile/>}/>
             <Route path="/question/:id" element={<QuestionPage/>}/>
+            <Route path="/notification" element={<NotificationPage/>}/>
           </Routes>
         </Router>
     </CssVarsProvider>

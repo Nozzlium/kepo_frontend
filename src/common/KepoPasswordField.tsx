@@ -13,7 +13,9 @@ const KepoPasswordField = (
     onChange? : ChangeEventHandler<HTMLInputElement>
   }
 ) => {
-  return <FormControl>
+  return <FormControl
+    error={true}
+  >
     <FormLabel>{ placeholder ?? "Password" }</FormLabel>
     <Input
       // html input attribute

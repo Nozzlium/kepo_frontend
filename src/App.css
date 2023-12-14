@@ -1,3 +1,26 @@
 .page {
   height: 100vh;
 }
+
+ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+li { cursor: pointer; }
+
+.notif-popup {
+  width: 100%;
+}
+
+@media only screen and (min-width: 900px) {
+  .notif-popup { width: 400px }
+}
+
+.page-content {
+  width: 100%
+}
+
+@media only screen and (min-width: 900px) {
+  .page-content { width: 700px }
+}

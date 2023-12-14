@@ -7,8 +7,7 @@ import { UIStatus } from "../lib/ui-status"
 import { KepoError, UnauthorizedError } from "../error/KepoError"
 import { useNavigate } from "react-router-dom"
 import KepoConfirmationDialog from "./KepoConfirmationDialog"
-import KepoGeneralErrorAlert from "./KepoGeneralErrorAlert"
-import KepoDialogErrorAlert from "./KepoDialogAlert"
+import KepoDialogErrorAlert from "./KepoDialogErrorAlert"
 
 interface NewQuestionState {
     categoryId: number,
@@ -132,7 +131,7 @@ const NewQuestionModal = ({
                         setPostQuestionParam(prev => {
                             const next = {...prev}
                             next.status = UIStatus.ERROR
-                            next.error = new KepoError("", "")
+                            next.error = new KepoError()
                             return next
                         })
                 }

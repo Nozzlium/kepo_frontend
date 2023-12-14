@@ -10,6 +10,7 @@ import token from "../lib/Token"
 import { useNavigate } from "react-router-dom"
 import KepoEmailField from "../common/KepoEmailField"
 import { UIStatus } from "../lib/ui-status"
+import KepoDialogErrorAlert from "../common/KepoDialogErrorAlert"
 
 interface ErrorNotice {
     hasError: boolean,
@@ -38,39 +39,6 @@ interface RegisterData {
     email: string,
     password: string,
     passwordConfirmation: string,
-}
-
-const CredentialAlert = (
-    {
-        registerState,
-        setRegisterState
-    }:{
-        registerState: RegisterState,
-        setRegisterState: Dispatch<React.SetStateAction<RegisterState>>
-    }
-) => {
-    if (registerState.status === UIStatus.ERROR && registerState.error) {
-        let message = registerState.error.message ?? "Unknown error"
-        return <Alert 
-            variant="soft"
-            color="danger"
-            endDecorator={
-                <IconButton variant="solid" size="sm" color="danger" onClick={() => {
-                    setRegisterState(prev => {
-                        return {
-                            status: UIStatus.IDLE,
-                            data: prev.data
-                        }
-                    })
-                }}>
-                    <Close />
-                </IconButton>
-            }
-            >
-            {message}
-        </Alert>
-    }
-    return null
 }
 
 const RegisterForm = () => {
@@ -127,7 +95,18 @@ const RegisterForm = () => {
         variant="soft"
         sx={styleform}
     >
-        <CredentialAlert registerState={registerState} setRegisterState={setRegisterState} />
+        <KepoDialogErrorAlert
+            text={registerState.error?.message}
+            show={registerState.status === UIStatus.ERROR}
+            onClose={() => {
+                setRegisterState(prev => {
+                    const next = {...prev}
+                    next.status = UIStatus.IDLE
+                    next.error = undefined
+                    return next
+                })
+            }}
+        />
         <form
             onSubmit={(event) => {
                 event.preventDefault();

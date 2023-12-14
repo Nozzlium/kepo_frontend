@@ -20,6 +20,7 @@ const KepoUsernameField = (
       name="username"
       placeholder={placeholder ?? "Username"}
       variant="plain"
+      required
       value={value}
       onChange={onChange}
     />
