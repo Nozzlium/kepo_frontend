@@ -65,14 +65,16 @@ const ProfileMenuButton = (
 
 const NotificationMenuButton = (
     {
-        status,
+        show,
+        loading,
         onNotificationSelected
     } : {
-        status : UIStatus.LOADING | UIStatus.SUCCESS | UIStatus.ERROR,
+        show? : boolean,
+        loading?: boolean,
         onNotificationSelected: (notification: Notification) => void
     }
 ) => {
-    if (status === UIStatus.SUCCESS) {
+    if (show) {
         return <Dropdown>
             <MenuButton
                 variant="plain"
@@ -82,12 +84,18 @@ const NotificationMenuButton = (
             <Menu
                 className="notif-popup"
             >
-                <KepoNotificationList/>
+                <KepoNotificationList
+                    miniView
+                />
             </Menu>
         </Dropdown>
     }
 
-    return <Progress/>
+    if (loading) {
+        return <Progress/>
+    }
+
+    return null
 }
 
 const KepoNavbar = (
@@ -216,7 +224,8 @@ const KepoNavbar = (
             </ListItem>
             <ListItem role="none" sx={{ marginInlineStart: 'auto' }}>
                 <NotificationMenuButton
-                    status={UIStatus.SUCCESS}
+                    show={ (navbarState.user && navbarState.status === UIStatus.SUCCESS)}
+                    loading={navbarState.status == UIStatus.LOADING}
                     onNotificationSelected={() => {}}
                 />
                 <ProfileMenuButton

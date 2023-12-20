@@ -5,6 +5,8 @@ import KepoNotificationCard from "./KepoNotificationCard"
 import { Button } from "@mui/joy"
 import notificationRequest from "../request/NotificationRequest"
 import { useNavigate } from "react-router-dom"
+import ListElement from "./ListElement"
+import { UnauthorizedError } from "../error/KepoError"
 
 interface NotificationListState {
     data: UserNotification[]
@@ -12,11 +14,40 @@ interface NotificationListState {
     status: UIStatus.SUCCESS | UIStatus.ERROR | UIStatus.LOADING | UIStatus.IDLE
 }
 
+const InteractButton = (
+    {
+        miniView,
+        onInteractButtonClicked,
+        status
+    }: {
+        miniView?: boolean,
+        onInteractButtonClicked?: () => void,
+        status: UIStatus
+    }
+) => {
+    let hint = "Muat lebih banyak lagi"
+
+    if (miniView) {
+        hint = "Lihat semua"
+    }
+
+    return <Button 
+        variant="plain" 
+        color="neutral" 
+        onClick={() => {
+            if (onInteractButtonClicked)
+                onInteractButtonClicked()
+        }} 
+        loading={status === UIStatus.LOADING}>{ hint }</Button>
+}
+
 const KepoNotificationList = (
     {
-        size
+        size,
+        miniView
     } : {
-        size?: number
+        size?: number,
+        miniView?: boolean
     }
 ) => {
     const navigate = useNavigate()
@@ -45,8 +76,32 @@ const KepoNotificationList = (
             } catch (error) {
                 if (signal?.aborted)
                     return
+
+                switch (true) {
+                    case error instanceof UnauthorizedError: {
+                        navigate("/login", {
+                            replace: true
+                        })
+                    }
+                }
             }
         })()
+    }
+
+    const redirectToNotificationPage = () => {
+        navigate(`/notification`)
+    }
+
+    const onInteractButtonClicked = () => {
+        if (miniView) {
+            redirectToNotificationPage()
+        } else {
+            setNotificationListState(prev => {
+                const next = {...prev}
+                next.status = UIStatus.LOADING
+                return next
+            })
+        }
     }
 
     useEffect(() => {
@@ -80,21 +135,18 @@ const KepoNotificationList = (
             margin: 8
         }}
     >
-        <ul
-        >
-            {listItem}
-        </ul>
-        <Button 
-            variant="plain" 
-            color="neutral" 
-            onClick={() => {
-                setNotificationListState(prev => {
-                    const next = {...prev}
-                    next.status = UIStatus.LOADING
-                    return next
-                })
-            }} 
-            loading={notificationListState.status === UIStatus.LOADING}>Load More</Button>
+        <ListElement
+            status={notificationListState.status}
+            items={listItem}
+            emptyMessage="Tidak ada notifikasi"
+        />
+        <InteractButton
+            miniView={miniView}
+            status={notificationListState.status}
+            onInteractButtonClicked={() => {
+                onInteractButtonClicked()
+            }}
+        />
     </div>
 }
 

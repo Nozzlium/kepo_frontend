@@ -82,6 +82,15 @@ const RegisterForm = () => {
         })()
     }
 
+    const isPasswordConfirmed = 
+        registerState.data.passwordConfirmation.length > 0 
+        && registerState.data.passwordConfirmation === registerState.data.password
+
+    const getPasswordConfirmationWarning: () => string | undefined = () => {
+        if (!isPasswordConfirmed)
+            return "Password tidak sesuai"
+    }
+
     useEffect(() => {
         if (registerState.status === UIStatus.LOADING) {
             register()
@@ -145,13 +154,21 @@ const RegisterForm = () => {
                         return next
                     })
                 }}/>
-                <KepoPasswordField placeholder="Confirm Password" value={registerState.data.passwordConfirmation} onChange={(event) => {
-                    setRegisterState(prev => {
-                        const next = {...prev}
-                        next.data.passwordConfirmation = event.target.value
-                        return next
-                    })
-                }}/>
+                <KepoPasswordField 
+                    placeholder="Confirm Password" 
+                    value={registerState.data.passwordConfirmation} 
+                    onChange={(event) => {
+                        setRegisterState(prev => {
+                                    const next = {...prev}
+                                    next.data.passwordConfirmation = event.target.value
+                                    return next
+                                }
+                            )
+                        }
+                    }    
+                    invalid={!isPasswordConfirmed}
+                    warningMessage={getPasswordConfirmationWarning()}
+                />
                 <Button 
                     sx={{ mt: 1 /* margin top */ }} 
                     type="submit" 

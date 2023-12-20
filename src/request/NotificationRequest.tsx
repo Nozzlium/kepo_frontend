@@ -1,4 +1,5 @@
 import UserNotification from "../data/Notification"
+import { UnauthorizedError } from "../error/KepoError"
 import NotificationParam from "../param/NotificationParam"
 import { NotificationResponse, NotificationsResponse, NotificationsTotalUnreadResponse } from "../response/NotificationResponse"
 import networkCall from "./NetworkCall"
@@ -15,6 +16,11 @@ class NotificationRequest {
             },
             signal: signal
         })
+
+        if (resp.data.code === 401) {
+            throw new UnauthorizedError(resp.data.status)
+        }
+
         const data = resp.data.data
         return [
             data.notifications,
@@ -26,6 +32,11 @@ class NotificationRequest {
         const resp = await networkCall.put<NotificationResponse>(`http://localhost:2637/api/notification/${notificationId}/read`, {
             signal: signal
         })
+
+        if (resp.data.code === 401) {
+            throw new UnauthorizedError(resp.data.status)
+        }
+
         const data = resp.data.data
         return data
     }
@@ -34,6 +45,11 @@ class NotificationRequest {
         const resp = await networkCall.get<NotificationsTotalUnreadResponse>(`http://localhost:2637/api/notification/unread`, {
             signal: signal
         })
+
+        if (resp.data.code === 401) {
+            throw new UnauthorizedError(resp.data.status)
+        }
+
         return resp.data.data.totalUnread
     }
 }

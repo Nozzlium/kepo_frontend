@@ -48,7 +48,7 @@ const NotificationPage = () => {
         </div>
         <KepoGeneralErrorAlert
             title={notificationPageState.error?.message ?? "terjadi error"}
-            show={true}
+            show={notificationPageState.status === UIStatus.ERROR}
             onCloseClicked={() => {
                 setNotificationPageState(_prev => {
                     return {
