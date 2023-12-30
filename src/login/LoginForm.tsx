@@ -129,11 +129,11 @@ const LoginForm = () => {
             </Sheet>
         </form>
         <Typography
-            endDecorator={<Link href="/register">Signup</Link>}
+            endDecorator={<Link href="/register">Daftar di sini</Link>}
             fontSize="sm"
             sx={{alignSelf: 'center'}}
         >
-            {"No account? "}
+            {"Belum punya akun? "}
         </Typography>
     </Sheet>
 }

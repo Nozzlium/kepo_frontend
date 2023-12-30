@@ -1,4 +1,4 @@
-import { Box, Divider, List, ListItem, ListItemButton, Dropdown, MenuButton, Menu, MenuItem, ListItemDecorator, Sheet } from "@mui/joy"
+import { Box, Divider, List, ListItem, ListItemButton, Dropdown, MenuButton, Menu, MenuItem, ListItemDecorator, Sheet, Badge } from "@mui/joy"
 import { NavigateOptions, NavigateProps, useLocation, useNavigate } from "react-router-dom"
 import icon from "../asset/icon.png"
 import { AccountBox, Logout, Notifications } from "@mui/icons-material"
@@ -11,10 +11,13 @@ import token from "../lib/Token"
 import { KepoError, UnauthorizedError } from "../error/KepoError"
 import KepoNotificationCard from "./KepoNotificationCard"
 import KepoNotificationList from "./KepoNotificationList"
+import notificationRequest from "../request/NotificationRequest"
 
 interface NavbarState {
     user?: User,
-    status: UIStatus.LOADING | UIStatus.SUCCESS | UIStatus.ERROR | UIStatus.IDLE,
+    unread?: number,
+    profileStatus: UIStatus.LOADING | UIStatus.SUCCESS | UIStatus.ERROR | UIStatus.IDLE,
+    notificationStatus: UIStatus.LOADING | UIStatus.SUCCESS | UIStatus.ERROR | UIStatus.IDLE,
     error?: KepoError
 }
 
@@ -29,7 +32,7 @@ const ProfileMenuButton = (
         goToLogin: () => void
     }
 ) => {
-    if (navbarState.status === UIStatus.LOADING) {
+    if (navbarState.profileStatus === UIStatus.LOADING) {
         return <Progress/>
     } else {
         if (navbarState.user) {
@@ -67,14 +70,38 @@ const NotificationMenuButton = (
     {
         show,
         loading,
+        unread,
         onNotificationSelected
     } : {
         show? : boolean,
         loading?: boolean,
+        unread?: number,
         onNotificationSelected: (notification: Notification) => void
     }
 ) => {
     if (show) {
+
+        if (unread && unread > 0)
+            return <Dropdown>
+                <MenuButton
+                    variant="plain"
+                >
+                    <Badge 
+                        badgeContent={unread}
+                        size="sm"
+                    >
+                        <Notifications/>
+                    </Badge>
+                </MenuButton>
+                <Menu
+                    className="notif-popup"
+                >
+                    <KepoNotificationList
+                        miniView
+                    />
+                </Menu>
+            </Dropdown>
+
         return <Dropdown>
             <MenuButton
                 variant="plain"
@@ -107,7 +134,8 @@ const KepoNavbar = (
 ) => {
     const navigate = useNavigate()
     const [navbarState, setNavbarState] = useState<NavbarState>({
-        status: UIStatus.LOADING
+        profileStatus: UIStatus.LOADING,
+        notificationStatus: UIStatus.LOADING
     })
 
     const goToProfile = () => {
@@ -150,9 +178,11 @@ const KepoNavbar = (
         (async () => {
             try {
                 const user = await userDetailRequest.getDetails(signal)
-                setNavbarState({
-                    user: user,
-                    status: UIStatus.SUCCESS
+                setNavbarState(prev => {
+                    const next = {...prev}
+                    next.user = user
+                    next.profileStatus = UIStatus.SUCCESS
+                    return next
                 })
             } catch (error) {
                 if (signal?.aborted) {
@@ -161,20 +191,72 @@ const KepoNavbar = (
 
                 switch (true) {
                     case error instanceof UnauthorizedError:
-                        setNavbarState({
-                            status: UIStatus.IDLE
+                        setNavbarState(prev => {
+                            const next = {...prev}
+                            next.profileStatus = UIStatus.IDLE
+                            return next
                         })
                         break
                     case error instanceof KepoError:
-                        setNavbarState({
-                            status: UIStatus.ERROR,
-                            error: error as KepoError
+                        setNavbarState(prev => {
+                            const next = {...prev}
+                            next.profileStatus = UIStatus.ERROR
+                            next.error = error as KepoError
+                            return next
                         })
                         break
                     default:
-                        setNavbarState({
-                            status: UIStatus.ERROR,
-                            error: new KepoError()
+                        setNavbarState(prev => {
+                            const next = {...prev}
+                            next.profileStatus = UIStatus.ERROR
+                            next.error = new KepoError()
+                            return next
+                        })
+                        break
+                }
+            }
+        })()
+    }
+
+    const loadUnreadNotifications = (
+        signal?: AbortSignal
+    ) => {
+        (async () => {
+            try {
+                const unread = await notificationRequest.getTotalUnread(signal)
+                setNavbarState(prev => {
+                    const next = {...prev}
+                    next.unread = unread
+                    next.notificationStatus = UIStatus.SUCCESS
+                    return next
+                })
+            } catch (error) {
+                if (signal?.aborted) {
+                    return
+                }
+
+                switch (true) {
+                    case error instanceof UnauthorizedError:
+                        setNavbarState(prev => {
+                            const next = {...prev}
+                            next.notificationStatus = UIStatus.IDLE
+                            return next
+                        })
+                        break
+                    case error instanceof KepoError:
+                        setNavbarState(prev => {
+                            const next = {...prev}
+                            next.notificationStatus = UIStatus.ERROR
+                            next.error = error as KepoError
+                            return next
+                        })
+                        break
+                    default:
+                        setNavbarState(prev => {
+                            const next = {...prev}
+                            next.notificationStatus = UIStatus.ERROR
+                            next.error = new KepoError()
+                            return next
                         })
                         break
                 }
@@ -184,11 +266,11 @@ const KepoNavbar = (
 
     useEffect(() => {
         const controller = new AbortController()
-        if (navbarState.status === UIStatus.LOADING) {
+        if (navbarState.profileStatus === UIStatus.LOADING) {
             loadUser(controller.signal)
         }
 
-        if (navbarState.status === UIStatus.ERROR) {
+        if (navbarState.profileStatus === UIStatus.ERROR) {
             if (onError)
                 onError(navbarState.error ?? new KepoError())
         }
@@ -196,7 +278,18 @@ const KepoNavbar = (
         return () => {
             controller.abort()
         }
-    }, [navbarState])
+    }, [navbarState.profileStatus])
+
+    useEffect(() => {
+        const controller = new AbortController()
+        if (navbarState.notificationStatus === UIStatus.LOADING) {
+            loadUnreadNotifications(controller.signal)
+        }
+
+        return () => {
+            controller.abort()
+        }
+    }, [navbarState.notificationStatus])
 
     return <Sheet
         component="nav"
@@ -224,8 +317,9 @@ const KepoNavbar = (
             </ListItem>
             <ListItem role="none" sx={{ marginInlineStart: 'auto' }}>
                 <NotificationMenuButton
-                    show={ (navbarState.user && navbarState.status === UIStatus.SUCCESS)}
-                    loading={navbarState.status == UIStatus.LOADING}
+                    show={ (navbarState.user && navbarState.profileStatus === UIStatus.SUCCESS)}
+                    loading={navbarState.notificationStatus == UIStatus.LOADING}
+                    unread={navbarState.unread}
                     onNotificationSelected={() => {}}
                 />
                 <ProfileMenuButton

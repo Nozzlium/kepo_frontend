@@ -17,7 +17,7 @@ import { Sort } from "@mui/icons-material"
 import { AnswerParam } from "../param/AnswerParam"
 import { KepoError } from "../error/KepoError"
 import ListElement from "../common/ListElement"
-import { MOST_LIKED, NEWEST } from "../lib/Constants"
+import { MOST_LIKED, NEWEST } from "../lib/constants"
 
 interface QuestionPageState {
     status: UIStatus.LOADING | UIStatus.SUCCESS | UIStatus.ERROR,

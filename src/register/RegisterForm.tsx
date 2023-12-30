@@ -1,4 +1,4 @@
-import { Alert, Box, Button, IconButton, Sheet} from "@mui/joy"
+import { Alert, Box, Button, IconButton, Link, Sheet, Typography} from "@mui/joy"
 import KepoPasswordField from "../common/KepoPasswordField"
 import KepoUsernameField from "../common/KepoUsernameField"
 import { KepoError } from "../error/KepoError"
@@ -82,9 +82,14 @@ const RegisterForm = () => {
         })()
     }
 
-    const isPasswordConfirmed = 
-        registerState.data.passwordConfirmation.length > 0 
-        && registerState.data.passwordConfirmation === registerState.data.password
+    const isPasswordConfirmed = registerState.data.passwordConfirmation === registerState.data.password
+
+    const passwordFieldNeedsWarning = (() => {
+        if (registerState.data.passwordConfirmation.length > 0) {
+            return !isPasswordConfirmed
+        }
+        return false
+    })()
 
     const getPasswordConfirmationWarning: () => string | undefined = () => {
         if (!isPasswordConfirmed)
@@ -118,7 +123,10 @@ const RegisterForm = () => {
         />
         <form
             onSubmit={(event) => {
-                event.preventDefault();
+                event.preventDefault()
+                if (!isPasswordConfirmed) {
+                    return
+                }
                 setRegisterState(prev => {
                     const next = {...prev}
                     next.status = UIStatus.LOADING
@@ -166,7 +174,7 @@ const RegisterForm = () => {
                             )
                         }
                     }    
-                    invalid={!isPasswordConfirmed}
+                    invalid={passwordFieldNeedsWarning}
                     warningMessage={getPasswordConfirmationWarning()}
                 />
                 <Button 
@@ -177,6 +185,13 @@ const RegisterForm = () => {
                 </Button>
             </Box>
         </form>
+        <Typography
+            endDecorator={<Link href="/login">Log masuk!</Link>}
+            fontSize="sm"
+            sx={{alignSelf: 'center'}}
+        >
+            {"Sudah punya akun? "}
+        </Typography>
     </Sheet>
 }
 export default RegisterForm

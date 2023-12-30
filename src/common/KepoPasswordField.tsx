@@ -18,7 +18,7 @@ const KepoPasswordField = (
   }
 ) => {
   return <FormControl
-    error={true}
+    error={invalid}
   >
     <FormLabel>{ placeholder ?? "Password" }</FormLabel>
     <Input
