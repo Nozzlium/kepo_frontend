@@ -157,6 +157,7 @@ const NewAnswerModal = ({
         } 
 
         if (newAnswerState.status === UIStatus.SUCCESS && newAnswerState.posted) {
+            console.log("oi anya")
             onAnswerPosted(newAnswerState.posted)
             return
         }

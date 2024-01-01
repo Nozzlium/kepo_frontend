@@ -17,7 +17,7 @@ import { Sort } from "@mui/icons-material"
 import { AnswerParam } from "../param/AnswerParam"
 import { KepoError } from "../error/KepoError"
 import ListElement from "../common/ListElement"
-import { MOST_LIKED, NEWEST } from "../lib/constants"
+import { MOST_LIKED, NEWEST } from "../lib/filter-constants"
 
 interface QuestionPageState {
     status: UIStatus.LOADING | UIStatus.SUCCESS | UIStatus.ERROR,
@@ -61,10 +61,18 @@ const AnswerArea = (
     const { id } = useParams<RouteParams>()
 
     const onAnswerSubmit = (answer: Answer) => {
-        setAnswersState(prev => {
-            const next = {...prev}
-            next.data = [answer, ...prev.data]
+        setAnswersState(prevAns => {
+            const next = {...prevAns}
+            next.data = [answer, ...prevAns.data]
             next.newAnswerDialogOpen = false
+            return next
+        })
+        setQuestionState(prev => {
+            console.log(prev)
+            const next = {...prev}
+            if (next.data) {
+                next.data.answers++
+            }
             return next
         })
     }
@@ -205,7 +213,7 @@ const AnswerArea = (
         return () => {
             controller.abort()
         }
-    }, [questionState])
+    }, [questionState.status])
 
     useEffect(() => {
         if (answersState.status === UIStatus.LOADING) {
@@ -216,7 +224,7 @@ const AnswerArea = (
                 onError(answersState.error)
             }
         }
-    }, [answersState])
+    }, [answersState.status])
 
     const openNewAnswerDialog = () => {
         setAnswersState(prev => {
@@ -331,34 +339,6 @@ const AnswerArea = (
                             >Newest</MenuItem>
                         </Menu>
                     </Dropdown>
-                    {/* <Sheet
-                        sx={{
-                            borderRadius: 'sm',
-                            boxShadow: 'md'
-                        }}
-                    >
-                        {
-                            answersState.data.length > 0 ?
-                            <ul style={{
-                                listStyleType: 'none',
-                                padding: 0
-                            }}>{getListItems(questionState.user)}</ul> :
-                            <div
-                                style={{
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    justifyContent: 'center',
-                                    alignItems: 'center',
-                                    width: '100%',
-                                    padding: '16px 0 16px 0'
-                                }}
-                            >
-                                <Typography
-                                    level="body-sm"
-                                ><b>Tidak ada jawaban</b></Typography>
-                            </div>
-                        }
-                    </Sheet> */}
                     <ListElement
                         status={answersState.status}
                         items={getListItems(questionState.user)}

@@ -9,6 +9,7 @@ import NewAnswerModal from "./NewAnswerModal"
 import { UIStatus } from "../lib/ui-status"
 import { KepoError, UnauthorizedError } from "../error/KepoError"
 import { useNavigate } from "react-router-dom"
+import answerRequest from "../request/AnswerRequest"
 
 interface AnswerCardState {
     answer?: Answer,
@@ -136,12 +137,44 @@ const KepoAnswerCard = (
         })()
     }
 
+    const deleteAnswer = () => {
+        (async () => {
+            if (!answerCardState.answer) {
+                return
+            }
+            try {
+                const answer = await answerRequest.delete(answerCardState.answer.id)
+                if (answer.id === answerCardState.answer.id) {
+                    setAnswerCardState(prev => {
+                        const next = {...prev}
+                        next.deleteButton = UIStatus.SUCCESS
+                        next.answer = undefined
+                        return next
+                    })
+                }
+            } catch (error) {
+                if (error instanceof KepoError) {
+                    if (error instanceof UnauthorizedError) {
+                        navigate("/login")
+                    }
+                }
+            }
+        })()
+    }
+
     useEffect(() => {
         if (answerCardState.likeButton === UIStatus.LOADING) {
             likeOrDislikeAnswer()
         }
 
-    }, [answerCardState])
+    }, [answerCardState.likeButton])
+
+    useEffect(() => {
+        if (answerCardState.deleteButton === UIStatus.LOADING) {
+            deleteAnswer()
+        }
+
+    }, [answerCardState.deleteButton])
 
     if (!answerCardState.answer) {
         return <div
@@ -158,7 +191,7 @@ const KepoAnswerCard = (
                 level="body-sm"
             ><b>{
                 answerCardState.deleteButton === UIStatus.SUCCESS ?
-                "Pertanyaan telah dihapus" :
+                "Jawaban telah dihapus" :
                 "Terdapat Error"
             }</b></Typography>
         </div>
@@ -252,7 +285,13 @@ const KepoAnswerCard = (
                         loading={answerCardState.deleteButton === UIStatus.LOADING}
                         disabled={false}
                         canEdit={canEdit ?? false}
-                        onDeleteClick={() => {}}
+                        onDeleteClick={() => {
+                            setAnswerCardState(prev => {
+                                const next = {...prev}
+                                next.deleteButton = UIStatus.LOADING
+                                return next
+                            })
+                        }}
                         onEditClicked={() => {
                             setAnswerCardState(prev => {
                                 const next = {...prev}
