@@ -257,6 +257,13 @@ const KepoQuestionCard = (
 
     }, [questionCardState])
 
+    useEffect(() => {
+        setQuestionCardState(prev => {
+            const next = {...prev}
+            next.question = question
+            return next
+        })
+    }, [question])
 
     if (!questionCardState.question) {
         if (questionCardState.deleteButton === UIStatus.SUCCESS) {

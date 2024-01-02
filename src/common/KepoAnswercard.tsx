@@ -83,11 +83,13 @@ const KepoAnswerCard = (
     {
         user,
         answer,
-        canEdit
+        canEdit,
+        onAnswerDeleted
     }: {
         user?: User,
         answer: Answer,
-        canEdit?: boolean
+        canEdit?: boolean,
+        onAnswerDeleted?: () => void
     }
 ) => {
     const navigate = useNavigate()
@@ -174,6 +176,11 @@ const KepoAnswerCard = (
             deleteAnswer()
         }
 
+        if (answerCardState.deleteButton === UIStatus.SUCCESS) {
+            if (onAnswerDeleted) {
+                onAnswerDeleted()
+            }
+        }
     }, [answerCardState.deleteButton])
 
     if (!answerCardState.answer) {

@@ -20,16 +20,12 @@ import ListElement from "../common/ListElement"
 import { MOST_LIKED, NEWEST } from "../lib/filter-constants"
 
 interface QuestionPageState {
-    status: UIStatus.LOADING | UIStatus.SUCCESS | UIStatus.ERROR,
-    data?: Question,
+    questionStatus: UIStatus.LOADING | UIStatus.SUCCESS | UIStatus.ERROR,
+    question?: Question,
     user?: User,
-    error?: KepoError
-}
-
-interface AnswersState {
-    status: UIStatus.IDLE | UIStatus.LOADING | UIStatus.SUCCESS | UIStatus.ERROR,
+    answersStatus: UIStatus.IDLE | UIStatus.LOADING | UIStatus.SUCCESS | UIStatus.ERROR,
     page: number,
-    data: Answer[],
+    answers: Answer[],
     sort: number,
     newAnswerDialogOpen: boolean,
     error?: KepoError
@@ -47,12 +43,10 @@ const AnswerArea = (
     }
 ) => {
     const navigate = useNavigate()
-    const [questionState, setQuestionState] = useState<QuestionPageState>({
-        status: UIStatus.LOADING
-    })
-    const [answersState, setAnswersState] = useState<AnswersState>({
-        status: UIStatus.IDLE,
-        data: [],
+    const [questionPageState, setQuestionPageState] = useState<QuestionPageState>({
+        questionStatus: UIStatus.LOADING,
+        answersStatus: UIStatus.IDLE,
+        answers: [],
         page: 0,
         sort: MOST_LIKED,
         newAnswerDialogOpen: false
@@ -61,17 +55,26 @@ const AnswerArea = (
     const { id } = useParams<RouteParams>()
 
     const onAnswerSubmit = (answer: Answer) => {
-        setAnswersState(prevAns => {
-            const next = {...prevAns}
-            next.data = [answer, ...prevAns.data]
+        setQuestionPageState(prev => {
+            const next = {...prev}
+            next.answers = [answer, ...prev.answers]
             next.newAnswerDialogOpen = false
+            if (next.question) {
+                const nextQuestion = {...next.question}
+                nextQuestion.answers++
+                next.question = nextQuestion
+            }
             return next
         })
-        setQuestionState(prev => {
-            console.log(prev)
+    }
+
+    const onAnswerDeleted = () => {
+        setQuestionPageState(prev => {
             const next = {...prev}
-            if (next.data) {
-                next.data.answers++
+            if (next.question) {
+                const nextQuestion = {...next.question}
+                nextQuestion.answers--
+                next.question = nextQuestion
             }
             return next
         })
@@ -82,12 +85,10 @@ const AnswerArea = (
         signal?: AbortSignal
     ) => void = (id: string, signal?: AbortSignal) => {
         (async () => {
-            const questionPageState: QuestionPageState = {
-                status: UIStatus.SUCCESS
-            }
+            const nextPageState = {...questionPageState}
             try {
                 const userResult = await userDetailRequest.getDetails(signal)
-                questionPageState.user = userResult
+                nextPageState.user = userResult
             } catch (error) {
                 if (signal?.aborted) {
                     return
@@ -96,76 +97,76 @@ const AnswerArea = (
 
             try {
                 const questionResult = await questionRequest.getById(id, signal)
-                questionPageState.data = questionResult
+                nextPageState.question = questionResult
+                nextPageState.questionStatus = UIStatus.SUCCESS
             } catch (error) {
                 if (signal?.aborted) {
                     return
                 }
                 if (error instanceof KepoError) {
-                    setQuestionState(prev => {
+                    setQuestionPageState(prev => {
                         const next = {...prev}
-                        next.status = UIStatus.ERROR
+                        next.questionStatus = UIStatus.ERROR
                         next.error = error as KepoError
                         return next
                     })
                     return
                 } else {
-                    setQuestionState(prev => {
+                    setQuestionPageState(prev => {
                         const next = {...prev}
-                        next.status = UIStatus.ERROR
+                        next.questionStatus = UIStatus.ERROR
                         next.error = new KepoError("Unknown", "unknown error")
                         return next
                     })
                     return
                 }
             }
-            setQuestionState(_prev => {
-                return questionPageState
-            })
+            setQuestionPageState(nextPageState)
         })()
     }
 
     const loadAnswers = () => {
         (async () => {
             try {
-                if (questionState.status === UIStatus.SUCCESS && questionState.data) {
+                if (questionPageState.questionStatus === UIStatus.SUCCESS 
+                        && questionPageState.question) {
                     const answerParams: AnswerParam = {
-                        pageNo: answersState.page + 1,
+                        pageNo: questionPageState.page + 1,
                         pageSize: 10,
                         sortBy: "LKE",
                         order: "DESC"
                     }
     
-                    if (answersState.sort === NEWEST) {
+                    if (questionPageState.page === NEWEST) {
                         answerParams.sortBy = "DTE"
                     }
     
                     const [answersResult, currentPage] = await answerRequest.getByQuestion(
-                        questionState.data.id, answerParams)
-                    setAnswersState(prev => {
+                        questionPageState.question.id, answerParams)
+                    setQuestionPageState(prev => {
                         const next = {...prev}
                         if (answersResult.length > 0) {
-                            next.data = next.data.concat(answersResult)
+                            next.answers = next.answers.concat(answersResult)
                             next.page = currentPage
                         }
-                        next.status = UIStatus.SUCCESS
+                        next.answersStatus = UIStatus.SUCCESS
                         return next
                     })
                 }
             } catch (error) {
                 switch (true) {
                     case error instanceof KepoError:
-                        setAnswersState(prev => {
+                        setQuestionPageState(prev => {
                             const next = {...prev}
-                            next.status = UIStatus.ERROR
+                            next.answersStatus = UIStatus.ERROR
                             next.error = error as KepoError
                             return next
                         })
                         break
                     default:
-                        setAnswersState(prev => {
+                        setQuestionPageState(prev => {
                             const next = {...prev}
-                            next.status = UIStatus.ERROR
+                            next.answersStatus = UIStatus.ERROR
                             next.error = new KepoError("UnknownError", "Udin")
                             return next
                         })
@@ -176,36 +177,36 @@ const AnswerArea = (
     }
 
     const loadMore = () => {
-        setAnswersState(prev => {
+        setQuestionPageState(prev => {
             const next = {...prev}
-            next.status = UIStatus.LOADING
+            next.answersStatus = UIStatus.LOADING
             return next
         })
     }
 
     const onSortMenuClicked = (value: number) => {
-        if (answersState.sort === value) {
+        if (questionPageState.sort === value) {
             return
         }
-        setAnswersState(prev => {
+        setQuestionPageState(prev => {
             const next = {...prev}
             next.sort = value  
-            next.data = []
+            next.answers = []
             next.page = 0
-            next.status = UIStatus.LOADING
+            next.answersStatus = UIStatus.LOADING
             return next
         })
     }
 
     useEffect(() => {
         const controller = new AbortController()
-        if (questionState.status === UIStatus.LOADING) {
+        if (questionPageState.questionStatus === UIStatus.LOADING) {
             loadQuestion(id ?? '0', controller.signal)
         }
-        if (questionState.status === UIStatus.SUCCESS) {
-            setAnswersState(prev => {
+        if (questionPageState.questionStatus === UIStatus.SUCCESS) {
+            setQuestionPageState(prev => {
                 const next = {...prev}
-                next.status = UIStatus.LOADING
+                next.answersStatus = UIStatus.LOADING
                 return next
             })
         }
@@ -213,21 +214,21 @@ const AnswerArea = (
         return () => {
             controller.abort()
         }
-    }, [questionState.status])
+    }, [questionPageState.questionStatus])
 
     useEffect(() => {
-        if (answersState.status === UIStatus.LOADING) {
+        if (questionPageState.answersStatus === UIStatus.LOADING) {
             loadAnswers()
         }
-        if (answersState.status === UIStatus.ERROR) {
+        if (questionPageState.answersStatus === UIStatus.ERROR) {
             if (onError) {
-                onError(answersState.error)
+                onError(questionPageState.error)
             }
         }
-    }, [answersState.status])
+    }, [questionPageState.answersStatus])
 
     const openNewAnswerDialog = () => {
-        setAnswersState(prev => {
+        setQuestionPageState(prev => {
             const next = {...prev}
             next.newAnswerDialogOpen = true
             return next
@@ -235,18 +236,19 @@ const AnswerArea = (
     }
 
     const getListItems = (user?: User) => {
-        return answersState.data.map(answer => (
+        return questionPageState.answers.map(answer => (
             <li key={answer.id}>
                 <KepoAnswerCard 
                     user={user} 
                     answer={answer}
                     canEdit={true}
+                    onAnswerDeleted={onAnswerDeleted}
                 />
             </li>
         ))
     }
 
-    if (questionState.status === UIStatus.ERROR) {
+    if (questionPageState.questionStatus === UIStatus.ERROR) {
         return <div
                 style={{
                     display: 'flex',
@@ -259,7 +261,7 @@ const AnswerArea = (
             >
                 <Typography
                     level="body-sm"
-                ><b>{questionState.error?.message ?? ""}</b></Typography>
+                ><b>{questionPageState.error?.message ?? ""}</b></Typography>
             </div>
     }
 
@@ -282,28 +284,28 @@ const AnswerArea = (
         })}
     >
         {
-            questionState.status === UIStatus.LOADING || !questionState.data ?
+            questionPageState.questionStatus === UIStatus.LOADING || !questionPageState.question ?
                 <Progress /> :
                 <>
                     <KepoQuestionCard 
-                        question={questionState.data}
-                        user={questionState.user}
+                        question={questionPageState.question}
+                        user={questionPageState.user}
                         canEdit={true}
                     />
                     <NewAnswerModal
-                        open={answersState.newAnswerDialogOpen}
+                        open={questionPageState.newAnswerDialogOpen}
                         closeDialog={() => {
-                            setAnswersState(prev => {
+                            setQuestionPageState(prev => {
                                 const next = {...prev}
                                 next.newAnswerDialogOpen = false
                                 return next
                             })
                         }}
                         onAnswerPosted={onAnswerSubmit}
-                        question={questionState.data}
+                        question={questionPageState.question}
                     />
                     {
-                        questionState.user ?
+                        questionPageState.user ?
                         <MainKepoCreateButton text="Write Answer" onClick={() => openNewAnswerDialog()} /> :
                         <Button
                             onClick={() => {
@@ -331,24 +333,24 @@ const AnswerArea = (
                             size="sm">
                             <MenuItem
                                 onClick={() => onSortMenuClicked(MOST_LIKED)}
-                                selected={answersState.sort === MOST_LIKED}
+                                selected={questionPageState.sort === MOST_LIKED}
                             >Most Liked</MenuItem>
                             <MenuItem
                                 onClick={() => onSortMenuClicked(NEWEST)}
-                                selected={answersState.sort === NEWEST}
+                                selected={questionPageState.sort === NEWEST}
                             >Newest</MenuItem>
                         </Menu>
                     </Dropdown>
                     <ListElement
-                        status={answersState.status}
-                        items={getListItems(questionState.user)}
+                        status={questionPageState.answersStatus}
+                        items={getListItems(questionPageState.user)}
                         emptyMessage="Tidak ada jawaban"
                     />
                     <Button 
                         variant="plain" 
                         color="neutral" 
                         onClick={() => loadMore()} 
-                        loading={answersState.status === UIStatus.LOADING}
+                        loading={questionPageState.answersStatus === UIStatus.LOADING}
                     >Load More</Button>
                 </>
         }
