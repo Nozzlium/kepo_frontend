@@ -40,7 +40,7 @@ const ProfileMenuButton = (
                 <MenuButton
                     variant="plain"
                 >
-                    Hello, {navbarState.user.username}
+                    Halo, {navbarState.user.username}
                 </MenuButton>
                 <Menu
                     variant="plain">
@@ -48,19 +48,19 @@ const ProfileMenuButton = (
                             <ListItemDecorator>
                                 <AccountBox/>
                             </ListItemDecorator>
-                            Profile
+                            Profil
                         </MenuItem>
                         <MenuItem onClick={() => onUserOptionSelect(2)}>
                             <ListItemDecorator>
                                 <Logout/>
                             </ListItemDecorator>
-                            Logout
+                            Keluar
                         </MenuItem>
                 </Menu>
             </Dropdown>
         } else {
             return <ListItemButton role="menuitem" onClick={() => goToLogin()}>
-                Sign in
+                Masuk
             </ListItemButton>
         }
     }

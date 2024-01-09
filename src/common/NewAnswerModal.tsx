@@ -250,7 +250,7 @@ const NewAnswerModal = ({
                 }
                 <FormControl>
                     <Textarea
-                        placeholder="Your answer here..."
+                        placeholder="Tulis jawabanmu di sini..."
                         minRows={5}
                         maxRows={5}
                         sx={{

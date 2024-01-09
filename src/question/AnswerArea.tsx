@@ -306,7 +306,7 @@ const AnswerArea = (
                     />
                     {
                         questionPageState.user ?
-                        <MainKepoCreateButton text="Write Answer" onClick={() => openNewAnswerDialog()} /> :
+                        <MainKepoCreateButton text="Tulis Jawaban" onClick={() => openNewAnswerDialog()} /> :
                         <Button
                             onClick={() => {
                                 navigate('/login')
@@ -318,7 +318,7 @@ const AnswerArea = (
                                     backgroundColor: '#aa5000'
                                 }
                             }}
-                        >Login to post an answer</Button>
+                        >Masuk bila ingin menjawab</Button>
                     }
                     <Dropdown>
                         <MenuButton
@@ -326,7 +326,7 @@ const AnswerArea = (
                             size="sm"
                             >
                             <Sort/>
-                            Sort by
+                            Urutkan berdasarkan
                         </MenuButton>
                         <Menu
                             variant="soft"
@@ -334,11 +334,11 @@ const AnswerArea = (
                             <MenuItem
                                 onClick={() => onSortMenuClicked(MOST_LIKED)}
                                 selected={questionPageState.sort === MOST_LIKED}
-                            >Most Liked</MenuItem>
+                            >Paling disukai</MenuItem>
                             <MenuItem
                                 onClick={() => onSortMenuClicked(NEWEST)}
                                 selected={questionPageState.sort === NEWEST}
-                            >Newest</MenuItem>
+                            >Terbaru</MenuItem>
                         </Menu>
                     </Dropdown>
                     <ListElement
@@ -351,7 +351,7 @@ const AnswerArea = (
                         color="neutral" 
                         onClick={() => loadMore()} 
                         loading={questionPageState.answersStatus === UIStatus.LOADING}
-                    >Load More</Button>
+                    >Muat lebih banyak lagi</Button>
                 </>
         }
     </Box>

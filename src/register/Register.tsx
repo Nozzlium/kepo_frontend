@@ -98,7 +98,7 @@ const Register = () => {
                     mb: 1,
                     textAlign: 'start'
                 }}>
-                    Register your account!
+                    Buat akun!
                 </Typography>
                 <RegisterForm/>
             </Box> :

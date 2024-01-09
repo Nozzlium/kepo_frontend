@@ -270,11 +270,11 @@ const NewQuestionModal = ({
             <Select
                 defaultValue={categories.selected}
                 variant="soft"
-                placeholder="Category"
+                placeholder="Kategori"
                 onChange={onCategoryChange}
             >{categoryItems}</Select>
             <Input
-                placeholder="Your question here..."
+                placeholder="Tulis pertanyaanmu di sini..."
                 required={true}
                 value={newQuestionState.content}
                 onChange={(event) => {
@@ -287,7 +287,7 @@ const NewQuestionModal = ({
                 disabled={newQuestionState.status === UIStatus.LOADING}
             />
             <Textarea
-                placeholder="Need to add details? Put them here..."
+                placeholder="Perlu lebih detil? Jabarkan di sini..."
                 minRows={5}
                 required={true}
                 onChange={(event) => {

@@ -1,4 +1,5 @@
 import { UNAUTHORIZED } from "../constants/error-code";
+import { BASE_URL } from "../constants/url";
 import Answer from "../data/Answer";
 import Question from "../data/Question";
 import { UnauthorizedError } from "../error/KepoError";
@@ -10,7 +11,7 @@ import networkCall from "./NetworkCall";
 class LikeRequest {
 
     likeQuestion: (param: QuestionLikeParam) => Promise<Question> = async (param: QuestionLikeParam) => {
-        const response = await networkCall.post<QuestionResponse>(`http://localhost:2637/api/question/like`, param)
+        const response = await networkCall.post<QuestionResponse>(`${BASE_URL}api/question/like`, param)
         const responseData = response.data
         
         if (responseData.code === UNAUTHORIZED) {
@@ -21,7 +22,7 @@ class LikeRequest {
     }
 
     likeAnswer: (param: AnswerLikeParam) => Promise<Answer> = async (param: AnswerLikeParam) => {
-        const response = await networkCall.post<AnswerResponse>(`http://localhost:2637/api/answer/like`, param)
+        const response = await networkCall.post<AnswerResponse>(`${BASE_URL}api/answer/like`, param)
         const responseData = response.data
 
         if (responseData.code === UNAUTHORIZED) {

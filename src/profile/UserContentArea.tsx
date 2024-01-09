@@ -113,7 +113,7 @@ const UserContentArea = (
                             my: 1,
                             textAlign: 'start'
                         }}
-                    ><b>{userState.data.username}'s activities</b></Typography>
+                    ><b>Aktivitas-aktivitas {userState.data.username}</b></Typography>
                     <Tabs defaultValue={0}
                         sx={{
                             zIndex: 0,
@@ -124,9 +124,9 @@ const UserContentArea = (
                         <TabList
                             tabFlex={1}
                         >
-                            <Tab>Questions</Tab>
-                            <Tab>Answers</Tab>
-                            <Tab>Likes</Tab>
+                            <Tab>Pertanyaan</Tab>
+                            <Tab>Jawaban</Tab>
+                            <Tab>Yang Disukai</Tab>
                         </TabList>
                         <TabPanel value={0}>
                             <UserQuestionsList 

@@ -1,4 +1,4 @@
-import { Alert, Box, Button, IconButton, Link, Sheet, Typography} from "@mui/joy"
+import { Alert, Box, Button, Checkbox, FormControl, FormHelperText, IconButton, Link, Sheet, Typography} from "@mui/joy"
 import KepoPasswordField from "../common/KepoPasswordField"
 import KepoUsernameField from "../common/KepoUsernameField"
 import { KepoError } from "../error/KepoError"
@@ -39,6 +39,7 @@ interface RegisterData {
     email: string,
     password: string,
     passwordConfirmation: string,
+    termsConditionApproved: boolean
 }
 
 const RegisterForm = () => {
@@ -49,7 +50,8 @@ const RegisterForm = () => {
             username: '',
             email: '',
             passwordConfirmation: '',
-            password: ''
+            password: '',
+            termsConditionApproved: false
         },
     })
 
@@ -127,6 +129,9 @@ const RegisterForm = () => {
                 if (!isPasswordConfirmed) {
                     return
                 }
+                if (!registerState.data.termsConditionApproved) {
+                    return
+                }
                 setRegisterState(prev => {
                     const next = {...prev}
                     next.status = UIStatus.LOADING
@@ -163,7 +168,7 @@ const RegisterForm = () => {
                     })
                 }}/>
                 <KepoPasswordField 
-                    placeholder="Confirm Password" 
+                    placeholder="Konfirmasi Password" 
                     value={registerState.data.passwordConfirmation} 
                     onChange={(event) => {
                         setRegisterState(prev => {
@@ -177,6 +182,22 @@ const RegisterForm = () => {
                     invalid={passwordFieldNeedsWarning}
                     warningMessage={getPasswordConfirmationWarning()}
                 />
+                <FormControl
+                    required
+                >
+                    <Checkbox 
+                        label="Saya telah menyetujui"
+                        checked={registerState.data.termsConditionApproved}
+                        onChange={() => {
+                            setRegisterState(prev => {
+                                const next = {...prev}
+                                next.data.termsConditionApproved = !prev.data.termsConditionApproved
+                                return next
+                            })
+                        }}
+                    />
+                    <FormHelperText><Link href="/">Syarat dan Ketentuan</Link></FormHelperText>
+                </FormControl>
                 <Button 
                     sx={{ mt: 1 /* margin top */ }} 
                     type="submit" 
@@ -186,7 +207,7 @@ const RegisterForm = () => {
             </Box>
         </form>
         <Typography
-            endDecorator={<Link href="/login">Log masuk!</Link>}
+            endDecorator={<Link href="/login">Masuk!</Link>}
             fontSize="sm"
             sx={{alignSelf: 'center'}}
         >

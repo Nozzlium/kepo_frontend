@@ -45,7 +45,7 @@ const QuestionOptions = (
                     <ListItemDecorator>
                         <Delete/>
                     </ListItemDecorator>
-                    Delete
+                    Hapus
                 </MenuItem>
             ]
 
@@ -55,7 +55,7 @@ const QuestionOptions = (
                         <ListItemDecorator>
                             <Edit/>
                         </ListItemDecorator>
-                        Edit
+                        Sunting
                     </MenuItem>
                 )
             }
@@ -338,7 +338,7 @@ const KepoQuestionCard = (
             <Typography
                     level="body-xs"
                 >
-                    Asked by {
+                    Ditanya oleh {
                         <b><Link 
                                 href={"/profile/" + questionCardState.question.user.id} 
                                 color="neutral"
@@ -358,7 +358,7 @@ const KepoQuestionCard = (
                     gap: '8px'
                 }}
             >
-                <Typography level="body-xs" sx={{my: 1}}><b>{questionCardState.question.answers} Answer(s)</b></Typography>
+                <Typography level="body-xs" sx={{my: 1}}><b>{questionCardState.question.answers} Jawaban</b></Typography>
                 <QuestionOptions
                     question={questionCardState.question}
                     user={user}

@@ -132,7 +132,8 @@ const KepoNotificationList = (
         style={{
             display: 'flex',
             flexDirection: 'column',
-            margin: 8
+            margin: 8,
+            gap: "8px"
         }}
     >
         <ListElement

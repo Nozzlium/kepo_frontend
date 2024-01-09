@@ -1,3 +1,4 @@
+import { BASE_URL } from "../constants/url"
 import UserNotification from "../data/Notification"
 import { UnauthorizedError } from "../error/KepoError"
 import NotificationParam from "../param/NotificationParam"
@@ -9,7 +10,7 @@ import networkCall from "./NetworkCall"
 */
 class NotificationRequest {
     get: (params: NotificationParam, signal?: AbortSignal) => Promise<[UserNotification[], number]> = async (params: NotificationParam, signal?: AbortSignal) => {
-        const resp = await networkCall.get<NotificationsResponse>('http://localhost:2637/api/notification', {
+        const resp = await networkCall.get<NotificationsResponse>(`${BASE_URL}api/notification`, {
             params: {
                 pageNo: params.pageNo ?? 1,
                 pageSize: params.pageSize ?? 5
@@ -29,7 +30,7 @@ class NotificationRequest {
     }
 
     read: (notificationId: number, signal?: AbortSignal) => Promise<UserNotification> = async (notificationId: number, signal?: AbortSignal) => {
-        const resp = await networkCall.put<NotificationResponse>(`http://localhost:2637/api/notification/${notificationId}/read`, {
+        const resp = await networkCall.put<NotificationResponse>(`${BASE_URL}api/notification/${notificationId}/read`, {
             signal: signal
         })
 
@@ -42,7 +43,7 @@ class NotificationRequest {
     }
 
     getTotalUnread: (signal?: AbortSignal) => Promise<number> = async (signal?: AbortSignal) => {
-        const resp = await networkCall.get<NotificationsTotalUnreadResponse>(`http://localhost:2637/api/notification/unread`, {
+        const resp = await networkCall.get<NotificationsTotalUnreadResponse>(`${BASE_URL}api/notification/unread`, {
             signal: signal
         })
 

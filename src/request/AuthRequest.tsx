@@ -4,10 +4,11 @@ import LoginResponse from "../response/LoginResponse";
 import { UnauthorizedError, UserAlreadyExistsError } from "../error/KepoError";
 import BaseResponse from "../response/BaseResponse";
 import token from "../lib/Token";
+import { BASE_URL } from "../constants/url";
 
 export class AuthRequest{
     login: (param: LoginParam) => Promise<string> = async (param: LoginParam) => {
-        const response = await axios.post<BaseResponse>(`http://localhost:2637/api/login`, param)
+        const response = await axios.post<BaseResponse>(`${BASE_URL}api/login`, param)
         const code = response.data.code
     
         if (code === 401) {
@@ -21,7 +22,7 @@ export class AuthRequest{
     }
 
     register: (param: RegisterParam) => Promise<string> = async (param: RegisterParam) => {
-        const response = await axios.post<BaseResponse>(`http://localhost:2637/api/register`, param)
+        const response = await axios.post<BaseResponse>(`${BASE_URL}api/register`, param)
         const code = response.data.code
     
         switch (code) {

@@ -44,7 +44,7 @@ const AnswerOptions = (
                     <ListItemDecorator>
                         <Delete/>
                     </ListItemDecorator>
-                    Delete
+                    Hapus
                 </MenuItem>
             ]
 
@@ -54,7 +54,7 @@ const AnswerOptions = (
                         <ListItemDecorator>
                             <Edit/>
                         </ListItemDecorator>
-                        Edit
+                        Sunting
                     </MenuItem>
                 )
             }
@@ -279,7 +279,7 @@ const KepoAnswerCard = (
                     <Typography
                         level="body-xs"
                     >
-                        Answered by {
+                        Dijawab oleh {
                             <b><Link href={"/profile/" + answerCardState.answer.user.id} color="neutral">{answerCardState.answer.user.username}</Link></b>
                         }, {answerCardState.answer.createdAt}
                     </Typography>

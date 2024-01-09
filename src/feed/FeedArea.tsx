@@ -116,7 +116,7 @@ const FeedArea = (
                 tempFeedPageState.data = [
                     {
                         id: 0,
-                        name: "Semua ketegori"
+                        name: "Semua Kategori"
                     },
                     ...categories
                 ]
@@ -289,7 +289,7 @@ const FeedArea = (
                 <>
                     {
                         feedPageState.user ?
-                        <MainKepoCreateButton text="Ask a Question!" onClick={() => openNewQuestionDialog()}/>
+                        <MainKepoCreateButton text="Tanyakan Sesuatu" onClick={() => openNewQuestionDialog()}/>
                         : <Button
                             onClick={() => {
                                 navigate('/login')
@@ -301,7 +301,7 @@ const FeedArea = (
                                     backgroundColor: '#aa5000'
                                 }
                             }}
-                        >Login to post a question</Button>
+                        >Masuk bila ingin bertanya</Button>
                     }
                     <Select 
                         defaultValue={0}
@@ -321,7 +321,7 @@ const FeedArea = (
                         variant="plain" 
                         color="neutral" 
                         onClick={() => loadMore()} 
-                        loading={questionsState.status === UIStatus.LOADING}>Load More</Button>
+                        loading={questionsState.status === UIStatus.LOADING}>Muat lebih banyak lagi</Button>
                 </>
             }
         </Box>

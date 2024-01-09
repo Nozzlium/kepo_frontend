@@ -120,7 +120,7 @@ const UserQuestionsList = ({
             color="neutral" 
             onClick={() => loadMore()} 
             loading={questionsState.status === UIStatus.LOADING}
-        >Load More</Button>
+        >Muat lebih banyak lagi</Button>
     </Box>
 }
 

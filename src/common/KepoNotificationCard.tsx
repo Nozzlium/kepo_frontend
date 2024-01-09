@@ -75,6 +75,8 @@ const KepoNotificationCard = (
             flexDirection: 'row',
             gap: 8,
             padding: 8,
+            margin: "4px 0px",
+            borderRadius: "8px",
             backgroundColor: getBackgroundColor(notification.isRead, theme.getCssVar("palette-background-body"))
         }}
         onClick={() => onNotificationSelected(notification)}

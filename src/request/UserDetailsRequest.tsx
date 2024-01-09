@@ -6,10 +6,11 @@ import { UnauthorizedError } from "../error/KepoError";
 import UserResponse from "../response/UserResponse";
 import networkCall from "./NetworkCall";
 import { CancelToken } from "axios";
+import { BASE_URL } from "../constants/url";
 
 export class UserDetailsRequest {
     getDetails: (signal?: AbortSignal) => Promise<User> = async (signal?: AbortSignal) => {
-        const response = await networkCall.get<BaseResponse>('http://localhost:2637/api/details', {
+        const response = await networkCall.get<BaseResponse>(`${BASE_URL}api/details`, {
             signal: signal
         })
 
@@ -22,7 +23,7 @@ export class UserDetailsRequest {
     }
 
     getDetailsById: (userId: number, signal?: AbortSignal) => Promise<User> = async (userId: number, signal?: AbortSignal) => {
-        const response = await networkCall.get<BaseResponse>(`http://localhost:2637/api/user/${userId}/details`, {
+        const response = await networkCall.get<BaseResponse>(`${BASE_URL}api/user/${userId}/details`, {
             signal: signal
         })
 

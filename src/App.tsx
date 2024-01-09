@@ -19,7 +19,7 @@ function App() {
 
   return (
     <CssVarsProvider
-      defaultMode='light'
+      defaultMode='dark'
     >
         <CssBaseline/>
         <Router>
