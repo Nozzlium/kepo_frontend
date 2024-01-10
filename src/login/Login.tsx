@@ -92,7 +92,14 @@ const Login = () => {
                     my: 'auto',
                 }}
             >
-                <img src={logo}/>
+                <img 
+                    src={logo} 
+                    onClick={() => {
+                            navigate("/")
+                        }
+                    }
+                    className="clickable"
+                />
                 <LoginForm/>
             </Box> : <Progress/>
         }

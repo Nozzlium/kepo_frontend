@@ -1,4 +1,4 @@
-import { Box, Sheet, Typography } from "@mui/joy"
+import { Box, Typography } from "@mui/joy"
 import RegisterForm from "./RegisterForm"
 import logo from "../asset/brand.png"
 import { UIStatus } from "../lib/ui-status"
@@ -93,7 +93,14 @@ const Register = () => {
                     my: 'auto',
                 }}
             >
-                <img src={logo}/>
+                <img 
+                    src={logo} 
+                    onClick={() => {
+                            navigate("/")
+                        }
+                    }
+                    className="clickable"
+                />
                 <Typography sx={{
                     mb: 1,
                     textAlign: 'start'

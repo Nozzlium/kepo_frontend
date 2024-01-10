@@ -9,6 +9,8 @@ ul {
 
 li { cursor: pointer; }
 
+.clickable { cursor: pointer; }
+
 .notif-popup {
   width: 100%;
 }
