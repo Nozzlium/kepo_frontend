@@ -1,4 +1,4 @@
-export const BASE_URL = "http://86.38.203.29:2637/"
+export const BASE_URL = "http://kepo.objectorientedcesa.com/"
 
 export const REGISTER = "register"
 export const LOGIN = "login"
